@@ -1,0 +1,1806 @@
+Reiseplan_2026_KORRIGIERT.html
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Korea & Japan 2026 – Reiseplan & Kostenabrechnung</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --primary:#2c7873; --primary-dark:#1a5a56; --secondary:#d35400; --accent:#e84393;
+  --accent-light:#fd79a8; --bg:#f5f7fa; --card:#fff; --text:#1a1a2e; --muted:#6b7280;
+  --border:#e5e7eb; --shadow:0 4px 24px rgba(0,0,0,0.08); --shadow-lg:0 10px 40px rgba(0,0,0,0.12);
+  --success:#27ae60; --success-light:#e8f5e9; --danger:#e74c3c; --danger-light:#ffebee;
+  --warning:#f39c12; --warning-light:#fff3e0; --info:#2980b9; --info-light:#e3f2fd;
+  --purple:#8e44ad; --purple-light:#f3e5f5;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);}
+
+.header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:16px 24px;}
+.header h1{font-size:1.3rem;font-weight:700;margin-bottom:6px}
+.header .meta{display:flex;gap:20px;flex-wrap:wrap;font-size:.8rem;opacity:.9}
+.header .meta span{display:flex;align-items:center;gap:6px}
+
+.timeline-wrap{background:#fff;border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:1000;}
+.timeline{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.timeline::-webkit-scrollbar{height:5px}
+.timeline::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
+.day-btn{flex-shrink:0;padding:8px 14px;border-radius:10px;border:2px solid var(--border);background:#fff;cursor:pointer;font-size:.75rem;font-weight:600;transition:.15s;text-align:left;min-width:100px}
+.day-btn:hover{border-color:var(--primary)}
+.day-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(44,120,115,.3)}
+.day-btn .d-date{font-size:.65rem;opacity:.75;display:block}
+.day-btn .d-city{font-weight:700}
+.day-btn .d-num{font-size:.6rem;opacity:.6}
+.cost-tab-btn{background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;border-color:var(--accent);}
+.cost-tab-btn.active{background:var(--accent);border-color:var(--accent);box-shadow:0 2px 8px rgba(232,67,147,.3);}
+
+.layout{display:flex;height:calc(100vh - 160px);min-height:700px}
+@media(max-width:900px){.layout{flex-direction:column;height:auto}}
+.sidebar{width:720px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;padding:0;}
+@media(max-width:1200px){.sidebar{width:100%;}}
+@media(max-width:900px){.sidebar{width:100%;height:65vh;border-right:none;border-bottom:1px solid var(--border)}}
+.sidebar::-webkit-scrollbar{width:8px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--primary);border-radius:4px}
+.day-content{display:none;padding:24px}
+.day-content.active{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Route */
+.day-header{margin-bottom:14px}
+.day-header h2{font-size:1.1rem;color:var(--primary);margin-bottom:3px}
+.day-header .day-sub{color:var(--muted);font-size:.85rem}
+.day-header .day-date{display:inline-block;background:var(--primary);color:#fff;padding:3px 12px;border-radius:20px;font-size:.7rem;font-weight:700;margin-top:6px}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.badge{font-size:.7rem;padding:3px 10px;border-radius:20px;font-weight:600}
+.badge-hotel{background:#fff3e0;color:#e65100}
+.note-box{background:#f0f9ff;border-left:4px solid var(--primary);padding:10px 12px;border-radius:0 8px 8px 0;font-size:.8rem;color:#1e3a5f;margin-bottom:14px;line-height:1.5}
+.route-list{position:relative}
+.route-item{display:flex;gap:12px;padding:12px 0;position:relative;border-bottom:1px dashed var(--border)}
+.route-item:last-child{border-bottom:none}
+.route-connector{position:absolute;left:14px;top:38px;bottom:-2px;width:2px;background:var(--border);z-index:0}
+.route-item:last-child .route-connector{display:none}
+.route-num{width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0;z-index:1}
+.route-num.hotel{background:var(--secondary)}
+.route-body{flex:1}
+.route-name{font-weight:700;font-size:.88rem;margin-bottom:2px;color:var(--text)}
+.route-desc{font-size:.78rem;color:var(--muted);line-height:1.4;margin-bottom:3px}
+.route-time{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:4px;margin-top:3px}
+.transport-tag{display:inline-flex;align-items:center;gap:4px;margin-top:5px;padding:3px 8px;border-radius:5px;font-size:.68rem;font-weight:700}
+.t-walk{background:#e8f5e9;color:#1b7a3f}
+.t-metro{background:#e3f2fd;color:#0d47a1}
+.t-train{background:#ede7f6;color:#4527a0}
+.t-car{background:#ffebee;color:#b71c1c}
+.t-bus{background:#fff8e1;color:#9c640c}
+.t-shinkansen{background:#fce4ec;color:#880e4f}
+.t-plane{background:#e0f2f1;color:#00695c}
+.t-ferry{background:#e8f5e9;color:#1b5e20}
+.t-cablecar{background:#f3e5f5;color:#6a1b9a}
+.t-monorail{background:#e8eaf6;color:#283593}
+.t-shuttle{background:#eceff1;color:#37474f}
+.dist-summary{margin-top:14px;padding:10px;background:#f8fafc;border-radius:8px;font-size:.8rem;border:1px solid var(--border)}
+.dist-summary strong{color:var(--primary)}
+.actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:9px 16px;border-radius:8px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.15s}
+.btn-maps-kr{background:#03c75a;color:#fff}
+.btn-maps-jp{background:#4285f4;color:#fff}
+.btn-center{background:#fff;color:var(--text);border:2px solid var(--border)}
+.btn-center:hover{border-color:var(--primary)}
+.sec-divider{margin:16px 0 10px;padding:7px 12px;background:linear-gradient(90deg,var(--primary),var(--primary-dark));color:#fff;border-radius:6px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:6px}
+
+/* Map */
+.map-wrap{flex:1;position:relative;background:#e5e7eb}
+#map{width:100%;height:100%}
+@media(max-width:900px){#map{height:45vh}}
+.map-overlay{position:absolute;top:10px;right:10px;z-index:500;display:flex;flex-direction:column;gap:5px}
+.map-overlay button{padding:7px 12px;border-radius:8px;border:none;background:#fff;font-size:.72rem;font-weight:600;cursor:pointer;box-shadow:var(--shadow);color:var(--text)}
+.map-overlay button:hover{background:var(--primary);color:#fff}
+.legend{position:absolute;bottom:10px;right:10px;background:rgba(255,255,255,.95);padding:8px 12px;border-radius:8px;box-shadow:var(--shadow);font-size:.68rem;z-index:500}
+.legend-item{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.legend-line{width:16px;height:3px;border-radius:2px}
+
+/* ============================================================
+   KOSTEN-APP
+   ============================================================ */
+.cost-login-wrap{background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:16px;padding:40px 28px;text-align:center;margin:10px 0;box-shadow:var(--shadow);}
+.cost-login-wrap h3{font-size:1.3rem;color:var(--text);margin-bottom:6px;}
+.cost-login-wrap p{font-size:.9rem;color:var(--muted);margin-bottom:24px;}
+.login-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:480px;margin:0 auto 20px;}
+@media(max-width:480px){.login-grid{grid-template-columns:1fr;}}
+.login-user-btn{display:flex;align-items:center;gap:10px;padding:14px 16px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--text);transition:.15s;text-align:left;width:100%;}
+.login-user-btn:hover{border-color:var(--primary);background:#f0f9ff;transform:translateY(-2px);box-shadow:var(--shadow);}
+.login-user-btn .lu-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;flex-shrink:0;}
+.login-user-btn .lu-name{flex:1;font-size:.9rem;}
+.login-user-btn .lu-role{font-size:.7rem;color:var(--muted);}
+.login-form{max-width:340px;margin:0 auto;}
+.login-form input{padding:14px 16px;border:2px solid var(--border);border-radius:12px;font-size:1rem;width:100%;margin-bottom:12px;outline:none;transition:.15s;}
+.login-form input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(44,120,115,.1);}
+.login-form button{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;padding:14px 32px;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;width:100%;transition:.15s;}
+.login-form button:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(44,120,115,.3);}
+.login-toggle{font-size:.85rem;color:var(--muted);margin-top:14px;cursor:pointer;text-decoration:underline;}
+.login-toggle:hover{color:var(--primary);}
+.login-error{color:var(--danger);font-size:.85rem;margin-top:10px;font-weight:600;}
+
+.cost-topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid var(--border);}
+.cost-topbar h3{font-size:1.15rem;color:var(--primary);display:flex;align-items:center;gap:8px;}
+.user-chip{display:inline-flex;align-items:center;gap:6px;background:var(--info-light);color:var(--info);padding:6px 14px;border-radius:20px;font-size:.85rem;font-weight:700;}
+.admin-chip{background:var(--warning-light);color:#e65100;}
+.logout-btn{background:var(--danger);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:.15s;}
+.logout-btn:hover{background:#c0392b;}
+
+.cost-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.cost-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 14px;text-align:center;box-shadow:var(--shadow);transition:.15s;}
+.cost-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.cost-card .label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;}
+.cost-card .value{font-size:1.5rem;font-weight:800;color:var(--primary);}
+.cost-card .value.negative{color:var(--danger);}
+.cost-card .value.positive{color:var(--success);}
+.cost-card .value.warning{color:var(--warning);}
+.cost-card .value.purple{color:var(--purple);}
+
+.group-totals{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-radius:14px;padding:20px;margin-bottom:20px;}
+.group-totals h4{font-size:1rem;margin-bottom:12px;opacity:.9;}
+.group-totals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;}
+.group-totals .gt-item{text-align:center;padding:8px;}
+.group-totals .gt-item .gt-val{font-size:1.6rem;font-weight:800;}
+.group-totals .gt-item .gt-label{font-size:.7rem;opacity:.85;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+
+.admin-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:20px;}
+.admin-user-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.admin-user-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--primary),var(--accent));}
+.admin-user-card.admin-card::before{background:linear-gradient(90deg,var(--warning),var(--secondary));}
+.admin-user-card .auc-name{font-size:1rem;font-weight:700;margin-bottom:2px;}
+.admin-user-card .auc-role{font-size:.7rem;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+.admin-user-card .auc-row{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:6px;padding:2px 0;}
+.admin-user-card .auc-row strong{color:var(--primary);}
+.admin-user-card .auc-balance{font-size:1.15rem;font-weight:800;margin-top:8px;padding-top:8px;border-top:2px dashed var(--border);}
+.admin-user-card .auc-balance.positive{color:var(--success);}
+.admin-user-card .auc-balance.negative{color:var(--danger);}
+.admin-user-card .auc-balance.neutral{color:var(--muted);}
+
+.cost-table-wrap{overflow-x:auto;margin-bottom:20px;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.cost-table{width:100%;border-collapse:collapse;font-size:.88rem;}
+.cost-table th{background:var(--primary);color:#fff;padding:12px 14px;text-align:left;font-size:.82rem;font-weight:700;white-space:nowrap;}
+.cost-table td{padding:12px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.cost-table tr:hover{background:#f8fafc;}
+.cost-table tr.status-bar{background:#fff3e0;}
+.cost-table tr.status-open{background:var(--danger-light);}
+.cost-table tr.status-paid{background:var(--success-light);}
+.cost-table tr.status-ueber{background:var(--purple-light);}
+.cost-table .amount{font-weight:700;text-align:right;}
+.cost-table .payer{color:var(--primary);font-weight:600;}
+
+.table-actions{display:flex;gap:6px;}
+.delete-btn{background:var(--danger-light);color:var(--danger);border:none;border-radius:6px;padding:6px 10px;font-size:.72rem;cursor:pointer;font-weight:600;transition:.15s;}
+.delete-btn:hover{background:var(--danger);color:#fff;}
+.toggle-btn{background:var(--warning-light);color:#e65100;border:none;border-radius:6px;padding:6px 10px;font-size:.72rem;cursor:pointer;font-weight:600;transition:.15s;}
+.toggle-btn:hover{background:var(--warning);color:#fff;}
+.edit-btn{background:var(--info-light);color:var(--info);border:none;border-radius:6px;padding:6px 10px;font-size:.72rem;cursor:pointer;font-weight:600;transition:.15s;}
+.edit-btn:hover{background:var(--info);color:#fff;}
+
+.status-badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;transition:.15s;}
+.status-badge:hover{opacity:0.85;}
+.status-bar{background:#fff3e0;color:#e65100;border:1px solid #ffe082;}
+.status-open{background:var(--danger-light);color:var(--danger);border:1px solid #ef9a9a;}
+.status-paid{background:var(--success-light);color:var(--success);border:1px solid #a5d6a7;}
+.status-ueber{background:var(--purple-light);color:var(--purple);border:1px solid #ce93d8;}
+.status-received{background:var(--success-light);color:var(--success);border:1px solid #a5d6a7;}
+.status-pending{background:var(--warning-light);color:#e65100;border:1px solid #ffe082;}
+
+.form-section{background:#fff;border:2px solid var(--border);border-radius:14px;padding:22px;margin-bottom:20px;box-shadow:var(--shadow);}
+.form-section h4{font-size:1rem;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.form-row{display:grid;gap:12px;align-items:end;margin-bottom:12px;}
+.form-row-2{grid-template-columns:1fr 1fr;}
+.form-row-3{grid-template-columns:2fr 1fr 1fr;}
+.form-row-4{grid-template-columns:2fr 1fr 1fr 140px;}
+.form-row-5{grid-template-columns:2fr 1fr 140px 140px 120px;}
+@media(max-width:700px){
+  .form-row-2,.form-row-3,.form-row-4,.form-row-5{grid-template-columns:1fr;}
+}
+.form-row input,.form-row select{
+  padding:14px 16px;border:2px solid var(--border);border-radius:10px;font-size:.9rem;outline:none;width:100%;background:#fff;
+}
+.form-row input:focus,.form-row select:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(44,120,115,.08);}
+.form-row button{
+  background:linear-gradient(135deg,var(--success),#219a52);color:#fff;border:none;
+  padding:14px 24px;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;transition:.15s;width:100%;
+}
+.form-row button:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(39,174,96,.3);}
+.form-row button.btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-light));}
+.form-row button.btn-accent:hover{box-shadow:0 4px 16px rgba(232,67,147,.3);}
+.form-row button.btn-info{background:linear-gradient(135deg,var(--info),#1a5276);}
+.form-row button.btn-info:hover{box-shadow:0 4px 16px rgba(41,128,185,.3);}
+.form-row button.btn-warning{background:linear-gradient(135deg,var(--warning),#d68910);}
+.form-row button.btn-warning:hover{box-shadow:0 4px 16px rgba(243,156,18,.3);}
+
+.form-hint{font-size:.82rem;color:var(--muted);margin-top:10px;line-height:1.4;}
+
+.cost-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:2px;flex-wrap:wrap;}
+.cost-tab{
+  padding:10px 20px;border-radius:10px 10px 0 0;border:none;background:transparent;
+  font-size:.85rem;font-weight:700;color:var(--muted);cursor:pointer;transition:.15s;
+  border-bottom:3px solid transparent;margin-bottom:-2px;
+}
+.cost-tab:hover{color:var(--primary);background:#f0f9ff;}
+.cost-tab.active{color:var(--primary);border-bottom-color:var(--primary);background:#f0f9ff;}
+
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fade .2s;}
+
+.balance-section{margin-top:16px;}
+.balance-item{
+  background:#fff;border-left:5px solid var(--primary);padding:14px 16px;border-radius:0 12px 12px 0;
+  font-size:.9rem;box-shadow:var(--shadow);margin-bottom:10px;display:flex;align-items:center;gap:12px;
+}
+.balance-item.owes{border-left-color:var(--danger);background:var(--danger-light);}
+.balance-item.gets{border-left-color:var(--success);background:var(--success-light);}
+.balance-item.neutral{border-left-color:var(--muted);background:#f8f9fa;}
+.balance-item strong{font-size:1rem;}
+.balance-item .bi-icon{font-size:1.5rem;}
+
+.owed-detail{
+  background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;
+  box-shadow:var(--shadow);border:1px solid var(--border);font-size:.88rem;
+}
+.owed-detail.owed-to-me{border-left:5px solid var(--warning);}
+.owed-detail.owed-by-me{border-left:5px solid var(--success);}
+.owed-detail strong{color:var(--primary);font-size:1rem;}
+
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.filter-btn{padding:8px 16px;border-radius:20px;border:2px solid var(--border);background:#fff;font-size:.8rem;font-weight:700;cursor:pointer;transition:.15s;color:var(--text);}
+.filter-btn:hover{border-color:var(--primary);}
+.filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+.cost-empty{text-align:center;padding:50px 20px;color:var(--muted);}
+.cost-empty-icon{font-size:3.5rem;margin-bottom:14px;}
+.cost-empty h4{font-size:1.1rem;color:var(--text);margin-bottom:6px;}
+.cost-empty p{font-size:.9rem;}
+
+.section-title{font-size:1rem;font-weight:700;color:var(--primary);margin:24px 0 12px;display:flex;align-items:center;gap:8px;}
+
+/* Restaurants */
+.rest-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px;transition:.15s;}
+.rest-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.rest-card .rest-name{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+.rest-card .rest-meta{font-size:.82rem;color:var(--muted);margin-bottom:6px;}
+.rest-card .rest-meta span{margin-right:12px;}
+.rest-card .rest-link{font-size:.82rem;color:var(--primary);text-decoration:none;font-weight:600;}
+.rest-card .rest-link:hover{text-decoration:underline;}
+.rest-card .rest-actions{display:flex;gap:6px;margin-top:10px;}
+
+/* ===== MOBILE ===== */
+@media(max-width:900px){
+  body{overflow-x:hidden}
+  .header{padding:12px 16px}
+  .header h1{font-size:1.05rem}
+  .header .meta{gap:10px;font-size:.72rem}
+  .timeline-wrap{padding:8px 12px;top:0}
+  .day-btn{padding:6px 10px;min-width:85px;border-radius:8px}
+  .layout{flex-direction:column;height:auto;min-height:auto}
+  .sidebar{width:100%;height:auto;max-height:70vh;border-right:none;border-bottom:2px solid var(--border);order:2}
+  .map-wrap{order:1;height:45vh;min-height:300px}
+  #map{height:45vh;min-height:300px}
+  .day-content{padding:14px}
+  .cost-summary{grid-template-columns:1fr 1fr;}
+  .admin-summary-grid{grid-template-columns:1fr;}
+  .group-totals-grid{grid-template-columns:1fr 1fr;}
+  .login-grid{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .header h1{font-size:.95rem}
+  .map-wrap{height:40vh;min-height:260px}
+  #map{height:40vh;min-height:260px}
+  .sidebar{max-height:65vh}
+  .actions{flex-direction:column;gap:5px}
+  .btn{width:100%;justify-content:center}
+  .map-overlay,.legend{display:none}
+}
+.day-btn[data-id="restaurants"].active{
+  background:var(--secondary);color:#fff;border-color:var(--secondary);
+  box-shadow:0 2px 8px rgba(211,84,0,.3);
+}
+.day-btn, .btn, .map-overlay button, .login-user-btn{
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+}
+.day-btn:active{transform:scale(0.97)}
+.sidebar, .timeline{-webkit-overflow-scrolling:touch;}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="header">
+  <h1>🇰🇷 Korea & 🇯🇵 Japan 2026 – Reiseplan & Kostenabrechnung</h1>
+  <div class="meta">
+    <span>🛬 17.08. 17:00 Incheon</span>
+    <span>🛫 Korea 26.08. 12:00</span>
+    <span>⛩️ Japan bis 04.09. 22:30</span>
+    <span>📋 101 Attraktionen</span>
+  </div>
+</div>
+
+<div class="timeline-wrap">
+  <div class="timeline" id="timeline"></div>
+</div>
+
+<div class="layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-overlay">
+      <button onclick="flyTo(37.57,126.98,12)">📍 Seoul</button>
+      <button onclick="flyTo(35.18,129.08,12)">📍 Busan</button>
+      <button onclick="flyTo(34.67,135.50,12)">📍 Osaka</button>
+      <button onclick="flyTo(35.68,139.76,11)">📍 Tokio</button>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:#27ae60"></div> Fußweg</div>
+      <div class="legend-item"><div class="legend-line" style="background:#2980b9"></div> U-Bahn/Metro</div>
+      <div class="legend-item"><div class="legend-line" style="background:#8e44ad"></div> Zug/Bahn</div>
+      <div class="legend-item"><div class="legend-line" style="background:#e74c3c"></div> Auto/Taxi</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f39c12"></div> Bus/Fähre/Shuttle</div>
+      <div class="legend-item"><div class="legend-line" style="background:#e84393"></div> Shinkansen/Flug</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   BENUTZER
+   ============================================================ */
+const USERS = [
+  {name:"Hubert Pieklo", pass:"FH288855", role:"user"},
+  {name:"Dariusz Zarosa", pass:"EU9720550", role:"user"},
+  {name:"Katarzyna Dunajczan", pass:"FK3882497", role:"user"},
+  {name:"Boguslawa Janina Nowinska", pass:"FA1717812", role:"user"},
+  {name:"Maria Dorota Maciejowska", pass:"FB1562974", role:"user"},
+  {name:"Robert Janusz Pieklo", pass:"EW5457133", role:"user"},
+  {name:"Anna Maria Pieklo", pass:"FE9651501", role:"user"},
+  {name:"Stanislaw Dariusz Trenda", pass:"EN0938461", role:"user"},
+  {name:"Klaudia Anna Kolasa", pass:"ET3956105", role:"user"},
+  {name:"Admin", pass:"admin", role:"admin"}
+];
+
+const COST_APP_KEY = 'dcw_costs_v6';
+const COST_SESSION_KEY = 'dcw_cost_session_v6';
+/* ============================================================
+   GOOGLE DRIVE CLOUD SYNC (Google Apps Script)
+   ============================================================ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzkD86SRv7vwLwfF9q_JoHpM9afSpBZzdwi64qI4h_U0v1qY4BIdeOBh2o4Ssx34F5W/exec';
+const SYNC_KEY = 'dcw_last_sync_v1';
+
+function getSyncStatus(){
+  try { return JSON.parse(localStorage.getItem(SYNC_KEY)||'{}'); } catch(e){ return {}; }
+}
+function setSyncStatus(s){ localStorage.setItem(SYNC_KEY, JSON.stringify(s)); }
+
+// Automatisch beim Start prüfen (wenn URL konfiguriert)
+async function autoSyncOnLoad(){
+  if(GAS_URL.includes('HIER_DEINE')) return;
+  try {
+    const resp = await fetch(GAS_URL + '?t=' + Date.now(), {cache:'no-store'});
+    const cloudData = await resp.json();
+    if(!cloudData || !cloudData.expenses) return;
+    
+    const localData = getCostData();
+    const cloudTime = cloudData.lastModified || 0;
+    const localTime = localData.lastModified || 0;
+    
+    if(cloudTime > localTime){
+      if(confirm('☁️ Neuere Daten in Google Drive gefunden (von ' + (cloudData.modifiedBy||'unbekannt') + ').\n\nSollen die lokalen Daten aktualisiert werden?')){
+        saveCostData(cloudData);
+        setSyncStatus({lastSync: Date.now(), source:'cloud'});
+        location.reload();
+      }
+    }
+  } catch(e){ console.log('Auto-Sync nicht möglich:', e); }
+}
+
+// ☁️ HOCHLADEN zu Google Drive
+// ☁️ HOCHLADEN zu Google Drive (inkl. Restaurants)
+async function pushToCloud(){
+  if(GAS_URL.includes('HIER_DEINE') || !GAS_URL.includes('script.google.com')){
+    alert('⚠️ Bitte zuerst die GAS_URL in Zeile ~348 konfigurieren!'); 
+    return;
+  }
+  const data = getCostData();
+  data.lastModified = Date.now();
+  data.modifiedBy = (getSession().name || 'Unbekannt');
+  
+  const counts = (data.expenses||[]).length + ' Kosten, ' + 
+                 (data.transfers||[]).length + ' Überweisungen, ' + 
+                 (data.restaurants||[]).length + ' Restaurants';
+  
+  if(!confirm('☁️ In Google Drive speichern?\n\nEnthält: ' + counts + '\n\nOK = Hochladen')){
+    return;
+  }
+  
+  try {
+    const btn = document.getElementById('sync-btn');
+    if(btn) { btn.innerHTML = '⏳ Speichere...'; btn.disabled = true; }
+    
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+    if(result.success){
+      setSyncStatus({lastSync: Date.now(), source:'local'});
+      alert('✅ Gespeichert in Google Drive!\n\nAndere Teilnehmer klicken auf "📥 Aus Google Drive laden".');
+    } else {
+      alert('❌ Fehler beim Speichern: ' + (result.error||'Unbekannt'));
+    }
+  } catch(e) {
+    alert('❌ Netzwerkfehler: ' + e.message + '\n\nTipp: Datei nicht per Doppelklick öffnen, sondern über http://localhost (siehe vorherige Nachricht).');
+  } finally {
+    const btn = document.getElementById('sync-btn');
+    if(btn) { btn.innerHTML = '☁️ In Google Drive speichern'; btn.disabled = false; }
+  }
+}
+
+// 📥 HERUNTERLADEN von Google Drive (inkl. Restaurants + Merge)
+async function pullFromCloud(){
+  if(GAS_URL.includes('HIER_DEINE') || !GAS_URL.includes('script.google.com')){
+    alert('⚠️ Bitte zuerst die GAS_URL konfigurieren!'); 
+    return;
+  }
+  try {
+    const btn = document.getElementById('sync-pull-btn');
+    if(btn) { btn.innerHTML = '⏳ Lade...'; btn.disabled = true; }
+    
+    const resp = await fetch(GAS_URL + '?t=' + Date.now(), {cache:'no-store'});
+    const cloudData = await resp.json();
+    
+    if(!cloudData || !cloudData.expenses){
+      alert('ℹ️ Keine Daten in Google Drive gefunden.');
+      return;
+    }
+    
+    const localData = getCostData();
+    const cloudDate = cloudData.lastModified ? new Date(cloudData.lastModified).toLocaleString('de-DE') : 'unbekannt';
+    
+    const cK = (cloudData.expenses||[]).length, cT = (cloudData.transfers||[]).length, cR = (cloudData.restaurants||[]).length;
+    const lK = (localData.expenses||[]).length, lT = (localData.transfers||[]).length, lR = (localData.restaurants||[]).length;
+    
+    // Merge-Modus: OK = ersetzen, Abbrechen = zusammenführen
+    const action = confirm(
+      '📥 Cloud-Daten laden?\n\n' +
+      '☁️ Cloud (' + (cloudData.modifiedBy||'unbekannt') + '):\n   ' + cK + ' Kosten, ' + cT + ' Überweisungen, ' + cR + ' Restaurants\n' +
+      '💻 Lokal (' + (getSession().name||'du') + '):\n   ' + lK + ' Kosten, ' + lT + ' Überweisungen, ' + lR + ' Restaurants\n\n' +
+      'OK = Cloud überschreibt alles\n' +
+      'Abbrechen = Zusammenführen (beides behalten)'
+    );
+    
+    if(action){
+      // Ersetzen
+      saveCostData(cloudData);
+    } else {
+      // Mergen: Duplikate vermeiden durch "Fingerprint"
+      const merged = {
+        expenses: mergeRecords(localData.expenses||[], cloudData.expenses||[], ['desc','amount','payer','date']),
+        transfers: mergeRecords(localData.transfers||[], cloudData.transfers||[], ['desc','amount','from','to','date']),
+        restaurants: mergeRecords(localData.restaurants||[], cloudData.restaurants||[], ['name','address','city']),
+        currency: cloudData.currency || localData.currency || 'EUR',
+        lastModified: Date.now(),
+        modifiedBy: getSession().name || 'Unbekannt'
+      };
+      saveCostData(merged);
+      alert('✅ Zusammengeführt!\nNeu: ' + merged.expenses.length + ' Kosten, ' + merged.transfers.length + ' Überweisungen, ' + merged.restaurants.length + ' Restaurants');
+    }
+    
+    setSyncStatus({lastSync: Date.now(), source:'cloud'});
+    location.reload();
+  } catch(e) {
+    alert('❌ Fehler: ' + e.message);
+  } finally {
+    const btn = document.getElementById('sync-pull-btn');
+    if(btn) { btn.innerHTML = '📥 Aus Google Drive laden'; btn.disabled = false; }
+  }
+}
+
+// Hilfsfunktion: Arrays zusammenführen ohne Duplikate
+function mergeRecords(localArr, cloudArr, keys){
+  const result = [...localArr];
+  const seen = new Set(result.map(item => keys.map(k => item[k]||'').join('|')));
+  cloudArr.forEach(item => {
+    const fp = keys.map(k => item[k]||'').join('|');
+    if(!seen.has(fp)){ result.push(item); seen.add(fp); }
+  });
+  return result;
+}
+// Sync-Status anzeigen
+function renderSyncStatus(){
+  const status = getSyncStatus();
+  if(!status.lastSync) return '';
+  const date = new Date(status.lastSync).toLocaleString('de-DE');
+  return `<span style="font-size:0.75rem;color:var(--muted);display:block;margin-top:4px;">☁️ Zuletzt synchronisiert: ${date}</span>`;
+}
+/* ============================================================
+   EINGEBETTETE DATEN (für Datei-Austausch)
+   ============================================================ */
+if(typeof window.__EMBEDDED_DATA__ !== 'undefined' && window.__EMBEDDED_DATA__){
+  if(confirm('📎 Diese Datei enthält eingebettete Reisedaten. Sollen sie geladen werden?\n\nAchtung: Lokale Daten werden überschrieben!')){
+    localStorage.setItem(COST_APP_KEY, JSON.stringify(window.__EMBEDDED_DATA__));
+  }
+}
+function getCostData(){
+  try{
+    const raw = localStorage.getItem(COST_APP_KEY);
+    if(!raw) return {expenses:[], transfers:[], restaurants:[], currency:'EUR'};
+    const parsed = JSON.parse(raw);
+    if(!parsed.expenses) parsed.expenses = [];
+    if(!parsed.transfers) parsed.transfers = [];
+    if(!parsed.restaurants) parsed.restaurants = [];
+    return parsed;
+  }catch(e){ return {expenses:[], transfers:[], restaurants:[], currency:'EUR'}; }
+}
+function saveCostData(data){ localStorage.setItem(COST_APP_KEY, JSON.stringify(data)); }
+
+function getSession(){ try{ return JSON.parse(localStorage.getItem(COST_SESSION_KEY)||'{}'); }catch(e){ return {}; } }
+function setSession(s){ localStorage.setItem(COST_SESSION_KEY, JSON.stringify(s)); }
+function clearSession(){ localStorage.removeItem(COST_SESSION_KEY); }
+/* ============================================================
+   DATEI MIT DATEN SPEICHERN (für E-Mail / WhatsApp)
+   ============================================================ */
+function saveFileWithData(){
+  const data = getCostData();
+  
+  // Aktuellen HTML-Quelltext holen
+  let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  
+  // Alte eingebettete Daten entfernen (falls vorhanden)
+  html = html.replace(/<script>window\.__EMBEDDED_DATA__=.*?<\/script>\s*/g, '');
+  
+  // Neue Daten als Script einbetten (direkt nach <head>)
+  const dataScript = '<script>window.__EMBEDDED_DATA__=' + JSON.stringify(data) + ';<\/script>';
+  html = html.replace('<head>', '<head>\n  ' + dataScript);
+  
+  // Als Datei herunterladen
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Korea_Japan_Reiseplan_2026_MIT_DATEN.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert('✅ Datei wurde gespeichert! Du kannst sie jetzt per E-Mail oder WhatsApp versenden.');
+}
+
+function exportJSON(){
+  const data = getCostData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Reisedaten_Export_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        const data = JSON.parse(evt.target.result);
+        if(!data.expenses) data.expenses = [];
+        if(!data.transfers) data.transfers = [];
+        if(!data.restaurants) data.restaurants = [];
+        if(confirm('📥 Daten importieren? Bestehende lokale Daten werden überschrieben.')){
+          saveCostData(data);
+          alert('✅ Daten erfolgreich importiert!');
+          location.reload();
+        }
+      }catch(err){ alert('❌ Ungültige JSON-Datei: ' + err.message); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+/* ============================================================
+   STATUS-HILFEN
+   ============================================================ */
+const STATUS_LABELS = {
+  offen: {label:'🟡 Offen – Bar vor Ort', cls:'status-open', desc:'Bar vor Ort bezahlt'},
+  offen_überweisung: {label:'💳 Offen – Überweisung', cls:'status-ueber', desc:'Wird per Überweisung beglichen'},
+  bezahlt: {label:'🟢 Bezahlt', cls:'status-paid', desc:'Bereits abgerechnet'},
+  bezahlt_überweisung: {label:'✅ Bezahlt – Überweisung', cls:'status-paid', desc:'Von erhaltenen Überweisungen abgezogen'}
+};
+
+const STATUS_ORDER = ['offen','offen_überweisung','bezahlt','bezahlt_überweisung'];
+
+function getStatusInfo(status){
+  return STATUS_LABELS[status] || STATUS_LABELS.offen;
+}
+
+function nextStatus(current){
+  const idx = STATUS_ORDER.indexOf(current);
+  return STATUS_ORDER[(idx+1) % STATUS_ORDER.length];
+}
+
+function isPaid(status){
+  return status==='bezahlt' || status==='bezahlt_überweisung';
+}
+
+function isUeberweisung(status){
+  return status==='offen_überweisung' || status==='bezahlt_überweisung';
+}
+
+/* ============================================================
+   ORTE & TAGE (gekürzt – identisch)
+   ============================================================ */
+const LOC = {
+  "Incheon International Airport":{lat:37.4602,lng:126.4407,t:"airport"},
+  "DK Airport Hotel":{lat:37.4605,lng:126.4400,t:"hotel"},
+  "Incheon Bridge":{lat:37.4120,lng:126.5630,t:"viewpoint"},
+  "Songdo Central Park":{lat:37.3900,lng:126.6350,t:"park"},
+  "Songdo Hanok Village":{lat:37.3950,lng:126.6400,t:"culture"},
+  "G-Tower Observatory":{lat:37.4025,lng:126.6550,t:"viewpoint"},
+  "Incheon Chinatown":{lat:37.4750,lng:126.6200,t:"culture"},
+  "Songwol-dong Fairy Tale Village":{lat:37.4760,lng:126.6270,t:"culture"},
+  "Somerset Palace Seoul":{lat:37.5700,lng:126.9800,t:"hotel"},
+  "Jogyesa Temple":{lat:37.5719,lng:126.9818,t:"temple"},
+  "Insa-dong":{lat:37.5745,lng:126.9850,t:"culture"},
+  "Cheonggyecheon Stream":{lat:37.5690,lng:126.9780,t:"park"},
+  "Myeong-dong Shopping District":{lat:37.5635,lng:126.9850,t:"shopping"},
+  "Namdaemun Market":{lat:37.5600,lng:126.9770,t:"market"},
+  "Gwanghwamun Gate":{lat:37.5758,lng:126.9768,t:"palace"},
+  "Gyeongbokgung Palace":{lat:37.5796,lng:126.9770,t:"palace"},
+  "National Folk Museum of Korea":{lat:37.5785,lng:126.9790,t:"museum"},
+  "Cheongha Korea Ginseng Museum":{lat:37.5750,lng:126.9800,t:"museum"},
+  "Seoul City Wall Naksan section":{lat:37.5880,lng:127.0060,t:"hike"},
+  "Dongdaemun Design Plaza":{lat:37.5665,lng:127.0090,t:"culture"},
+  "Namsangol Hanok Village":{lat:37.5590,lng:126.9930,t:"culture"},
+  "N Seoul Tower":{lat:37.5512,lng:126.9882,t:"viewpoint"},
+  "Gangnam Underground Shopping Area":{lat:37.5010,lng:127.0260,t:"shopping"},
+  "NOTE Gangnam Perfume Workshop":{lat:37.5020,lng:127.0250,t:"activity"},
+  "Garosu-gil":{lat:37.5200,lng:127.0230,t:"shopping"},
+  "Apgujeong Rodeo Street":{lat:37.5270,lng:127.0400,t:"shopping"},
+  "Privilege Bar Mondrian Seoul Itaewon":{lat:37.5340,lng:127.0000,t:"nightlife"},
+  "The Hyundai Seoul":{lat:37.5250,lng:126.9280,t:"shopping"},
+  "Seoul Station":{lat:37.5559,lng:126.9723,t:"station"},
+  "Samsung Innovation Museum Suwon":{lat:37.2571,lng:127.0560,t:"museum"},
+  "Hwaseong Haenggung Palace":{lat:37.2810,lng:127.0140,t:"palace"},
+  "Hyowon Bell":{lat:37.2850,lng:127.0100,t:"culture"},
+  "Hwaseong Fortress":{lat:37.2880,lng:127.0110,t:"fortress"},
+  "Haengnidan-gil":{lat:37.2800,lng:127.0150,t:"street"},
+  "Mr. Toilet House":{lat:37.2700,lng:127.0500,t:"museum"},
+  "Good Morning Residence Hue":{lat:36.3500,lng:127.3850,t:"hotel"},
+  "Hanbat Arboretum":{lat:36.3700,lng:127.3880,t:"park"},
+  "Expo Science Park":{lat:36.3760,lng:127.3860,t:"museum"},
+  "Hanbit Tower":{lat:36.3765,lng:127.3865,t:"viewpoint"},
+  "National Science Museum Daejeon":{lat:36.3760,lng:127.3950,t:"museum"},
+  "Yuseong Hot Springs Public Foot Bath":{lat:36.3550,lng:127.3400,t:"spa"},
+  "Euneungjeongi Cultural Street Skyroad":{lat:36.3500,lng:127.4300,t:"culture"},
+  "Daejeon Station":{lat:36.3320,lng:127.4350,t:"station"},
+  "Gakwonsa Temple Cheonan":{lat:36.8100,lng:127.1800,t:"temple"},
+  "Dongseong-ro Street Daegu":{lat:35.8680,lng:128.5960,t:"shopping"},
+  "Daegu Modern History Museum":{lat:35.8710,lng:128.6000,t:"museum"},
+  "ST.GEUNDAE BAKERY Daegu":{lat:35.8700,lng:128.5950,t:"food"},
+  "Seomun Market":{lat:35.8685,lng:128.5800,t:"market"},
+  "83Tower E-World":{lat:35.8530,lng:128.5650,t:"amusement"},
+  "Dongdaegu Station":{lat:35.8790,lng:128.6280,t:"station"},
+  "Donghwasa Temple":{lat:35.9910,lng:128.6970,t:"temple"},
+  "Best Louis Hamilton Hotel Haeundae":{lat:35.1630,lng:129.1630,t:"hotel"},
+  "Haeundae Beach":{lat:35.1580,lng:129.1600,t:"beach"},
+  "Club D Oasis Spa":{lat:35.1600,lng:129.1650,t:"spa"},
+  "Haeundae Blue Line Park Mipo Station":{lat:35.1630,lng:129.1900,t:"station"},
+  "Haeundae Sky Capsule":{lat:35.1630,lng:129.1900,t:"transport"},
+  "Gwangalli Beach":{lat:35.1530,lng:129.1200,t:"beach"},
+  "LASOOP cafe Busan":{lat:35.1550,lng:129.1180,t:"food"},
+  "Songdo Marine Cable Car":{lat:35.0760,lng:129.0230,t:"transport"},
+  "Songdo Sky Park Busan":{lat:35.0750,lng:129.0200,t:"park"},
+  "Hotel Trad Hakata":{lat:33.5900,lng:130.4200,t:"hotel"},
+  "Canal City Hakata":{lat:33.5900,lng:130.4100,t:"shopping"},
+  "Tocho-ji Temple":{lat:33.5930,lng:130.4150,t:"temple"},
+  "Tenjin Underground Shopping Center":{lat:33.5900,lng:130.4000,t:"shopping"},
+  "Fukuoka Castle Ruins":{lat:33.5850,lng:130.3850,t:"castle"},
+  "Fukuoka Science Museum":{lat:33.5900,lng:130.3800,t:"museum"},
+  "Fukuoka Tower":{lat:33.5930,lng:130.3510,t:"viewpoint"},
+  "Daihonzan Naritasan Kurume Temple":{lat:33.3200,lng:130.5200,t:"temple"},
+  "1RX-93ff Nu Gundam LaLaport Fukuoka":{lat:33.5950,lng:130.4250,t:"culture"},
+  "Hakata Station":{lat:33.5900,lng:130.4200,t:"station"},
+  "Hiroshima Station":{lat:34.3970,lng:132.4750,t:"station"},
+  "Hiroshima Castle":{lat:34.4020,lng:132.4590,t:"castle"},
+  "Atomic Bomb Dome":{lat:34.3955,lng:132.4537,t:"memorial"},
+  "Hiroshima Peace Memorial Park":{lat:34.3920,lng:132.4520,t:"memorial"},
+  "Hiroshima National Peace Memorial Hall":{lat:34.3950,lng:132.4550,t:"memorial"},
+  "Fukuyama Station":{lat:34.4890,lng:133.3620,t:"station"},
+  "Fukuyama Castle":{lat:34.4910,lng:133.3610,t:"castle"},
+  "Fukuyama Auto & Clock Museum":{lat:34.4900,lng:133.3600,t:"museum"},
+  "Holiday Inn Osaka Namba by IHG":{lat:34.6660,lng:135.5020,t:"hotel"},
+  "Dotonbori":{lat:34.6680,lng:135.5010,t:"culture"},
+  "Hozenji Yokocho":{lat:34.6685,lng:135.5015,t:"culture"},
+  "Samurai and Ninja Experience Shinsaibashi":{lat:34.6700,lng:135.5000,t:"activity"},
+  "Grenier Patisserie Kitahama":{lat:34.6900,lng:135.5100,t:"food"},
+  "Osaka Castle":{lat:34.6873,lng:135.5259,t:"castle"},
+  "Umeda Sky Building":{lat:34.7050,lng:135.4900,t:"viewpoint"},
+  "Osaka Namba Station":{lat:34.6660,lng:135.5020,t:"station"},
+  "Kobe City Museum":{lat:34.6830,lng:135.1880,t:"museum"},
+  "Kobe Flower Clock":{lat:34.6830,lng:135.1900,t:"park"},
+  "Kobe City Hall Observation Lobby":{lat:34.6900,lng:135.1950,t:"viewpoint"},
+  "Sannomiya Station":{lat:34.6940,lng:135.1950,t:"station"},
+  "Tadanoumi Station":{lat:34.4400,lng:133.2300,t:"station"},
+  "Okunoshima Visitor Center":{lat:34.3100,lng:132.9900,t:"nature"},
+  "Nintendo Museum Uji":{lat:34.8900,lng:135.8000,t:"museum"},
+  "Toei Kyoto Studio Park":{lat:35.0220,lng:135.7600,t:"park"},
+  "Arashiyama Bamboo Forest":{lat:35.0170,lng:135.6710,t:"nature"},
+  "Kyoto Botanical Gardens":{lat:35.0150,lng:135.7650,t:"park"},
+  "Kamigamo Shrine":{lat:35.0600,lng:135.7700,t:"temple"},
+  "Zenkyo-an Temple Kyoto":{lat:35.0000,lng:135.7800,t:"temple"},
+  "Kyoto Station":{lat:34.9850,lng:135.7580,t:"station"},
+  "Harukas 300":{lat:34.6460,lng:135.5130,t:"viewpoint"},
+  "Sumiyoshi Taisha":{lat:34.6120,lng:135.4900,t:"temple"},
+  "Onyado Nono Nara Natural Hot Spring":{lat:34.6850,lng:135.8300,t:"hotel"},
+  "Nara Park":{lat:34.6850,lng:135.8430,t:"park"},
+  "Sheraton Grande Tokyo Bay Hotel":{lat:35.6270,lng:139.8850,t:"hotel"},
+  "teamLab Planets TOKYO":{lat:35.6490,lng:139.7890,t:"museum"},
+  "Toyosu Senkyaku Banrai":{lat:35.6550,lng:139.7850,t:"culture"},
+  "Tokyo Disneyland":{lat:35.6329,lng:139.8804,t:"amusement"},
+  "Tokyo Skytree":{lat:35.7100,lng:139.8107,t:"viewpoint"},
+  "Donguri Republic Tokyo Skytree Town Solamachi":{lat:35.7100,lng:139.8100,t:"shopping"},
+  "Senso-ji Temple":{lat:35.7148,lng:139.7967,t:"temple"},
+  "Akihabara Electric Town":{lat:35.6980,lng:139.7740,t:"shopping"},
+  "Imperial Palace Outer Gardens":{lat:35.6850,lng:139.7600,t:"park"},
+  "My Basket supermarket Tokyo":{lat:35.6800,lng:139.7700,t:"shopping"},
+  "Tokyo Tower":{lat:35.6586,lng:139.7454,t:"viewpoint"},
+  "teamLab Borderless Azabudai Hills":{lat:35.6600,lng:139.7390,t:"museum"},
+  "Shibuya Crossing":{lat:35.6595,lng:139.7004,t:"culture"},
+  "Ebisu Hashian soba":{lat:35.6450,lng:139.7050,t:"food"},
+  "Tokyo Metropolitan Government Building Observatory":{lat:35.6895,lng:139.6917,t:"viewpoint"},
+  "Warner Bros.Studio Tour Tokyo The Making of Harry Potter":{lat:35.7400,lng:139.6500,t:"museum"},
+  "The Railway Museum Saitama":{lat:35.9050,lng:139.6230,t:"museum"},
+};
+
+const DAYS = [
+  {id:"d17",num:"Tag 1",date:"17.08.2026",city:"Incheon",title:"Ankunft & Check-in",hotel:"DK Airport Hotel",kr:true,opt:false,stops:["Incheon International Airport","DK Airport Hotel"],modes:["car"],trans:["Hotel-Shuttle / Taxi / AREX"],det:["Ankunft 17:00 Uhr Terminal 1/2. Einreise, Gepäck, Abendessen am Flughafen, Transfer zum Hotel."],tim:["~20 Min."],note:"Kein Zwischenstopp. Nur Check-in und Ruhe."},
+  {id:"d18",num:"Tag 2",date:"18.08.2026",city:"Incheon → Seoul",title:"Incheon Sightseeing & Umzug nach Seoul",hotel:"Somerset Palace Seoul",kr:true,opt:false,stops:["DK Airport Hotel","Incheon Bridge","Songdo Central Park","Songdo Hanok Village","G-Tower Observatory","Incheon Chinatown","Songwol-dong Fairy Tale Village","Somerset Palace Seoul","Jogyesa Temple","Insa-dong","Cheonggyecheon Stream","Myeong-dong Shopping District","Namdaemun Market"],modes:["car","car","walk","walk","walk","walk","car","walk","walk","walk","walk","walk"],trans:["Taxi/Mietwagen","Fahrt über Brücke","-","-","-","-","Fahrt nach Seoul","Fußweg","Fußweg","Fußweg","Metro Linie 2","Fußweg"],det:["Start am Hotel","Incheon Bridge (21,4 km) – nur Fahrt","Songdo Central Park & Hanok Village","G-Tower Observatory (33. Stock)","Incheon Chinatown – Mittagessen","Songwol-dong Fairy Tale Village","Fahrt nach Seoul (~45 Min.)","Jogyesa Temple (5 Min. vom Hotel)","Insa-dong Kunstgasse","Cheonggyecheon Stream","Myeong-dong Shopping","Namdaemun Market"],tim:["~30 Min.","~15 Min.","1 Std.","45 Min.","1 Std.","45 Min.","~45 Min.","5 Min.","20 Min.","15 Min.","1,5 Std.","1 Std."],note:"A: Incheon-Cluster + Seoul Zentrum. B: Myeong-dong/Namdaemun nur bei Energie."},
+  {id:"d19",num:"Tag 3",date:"19.08.2026",city:"Seoul",title:"Palast, Museen & Namsan",hotel:"Somerset Palace Seoul",kr:true,opt:false,stops:["Somerset Palace Seoul","Gwanghwamun Gate","Gyeongbokgung Palace","National Folk Museum of Korea","Cheongha Korea Ginseng Museum","Seoul City Wall Naksan section","Dongdaemun Design Plaza","Namsangol Hanok Village","N Seoul Tower"],modes:["walk","walk","walk","walk","bus","metro","metro","bus"],trans:["Fußweg","Fußweg","Fußweg","Fußweg","Bus/Taxi","Metro Linie 3 + Fuß","Metro Linie 4","Metro/Bus + Seilbahn"],det:["10 Min. Fußweg","Wachablösung 10:00/14:00!","Hauptpalast Joseon (2-3 Std.)","Folkmuseum im Gelände","Traditionelle Medizinkultur","Wanderung auf der Stadtmauer","Zaha Hadid Architektur","5 traditionelle Hanok-Häuser","N Seoul Tower – Sonnenuntergang"],tim:["10 Min.","-","2-3 Std.","1 Std.","45 Min.","1 Std.","30 Min.","30 Min.","1,5 Std."],note:"A: Gwanghwamun, Gyeongbokgung, DDP, N Seoul Tower. B: Folk Museum, Ginseng, Naksan, Namsangol."},
+  {id:"d20",num:"Tag 4",date:"20.08.2026",city:"Suwon / Seoul",title:"Suwon Tagesausflug & Gangnam Abend",hotel:"Somerset Palace Seoul",kr:true,opt:false,stops:["Somerset Palace Seoul","Samsung Innovation Museum Suwon","Hwaseong Haenggung Palace","Hyowon Bell","Hwaseong Fortress","Haengnidan-gil","Mr. Toilet House","Gangnam Underground Shopping Area","NOTE Gangnam Perfume Workshop","Garosu-gil","Apgujeong Rodeo Street","Privilege Bar Mondrian Seoul Itaewon"],modes:["train","walk","walk","walk","walk","walk","taxi","metro","walk","metro","metro","metro"],trans:["Metro Linie 1 nach Suwon (~1 Std.)","Bus 777/700","Fußweg","Fußweg","Fußweg","Fußweg","Taxi/Bus","Metro Linie 2","Fußweg","Metro Linie 3","Metro Linie 3","Metro Linie 6"],det:["Frühe Abfahrt","Samsung Museum (Reservierung nötig!)","Nebenpalast des Königs","Historische Glocke","UNESCO-Welterbe (2 Std.)","Café-Straße","Skurriles Museum","Gangnam Underground Shopping","Parfüm-Workshop","Designerstraße","Luxus-Shopping","Itaewon Bar (nur Erwachsene)"],tim:["~1 Std.","1,5 Std.","45 Min.","20 Min.","2 Std.","1 Std.","30 Min.","20 Min.","1 Std.","1 Std.","5 Min.","20 Min."],note:"A: Samsung Museum, Hwaseong, Gangnam. B: Hyowon, Mr. Toilet, Garosu, Apgujeong. C: Privilege Bar."},
+  {id:"d21",num:"Tag 5",date:"21.08.2026",city:"Seoul → Daejeon",title:"Optionaler Vormittag & Daejeon",hotel:"Good Morning Residence Hue",kr:true,opt:false,stops:["Somerset Palace Seoul","The Hyundai Seoul","Seoul Station","Hanbat Arboretum","Expo Science Park","Hanbit Tower","National Science Museum Daejeon","Yuseong Hot Springs Public Foot Bath"],modes:["metro","metro","train","walk","walk","walk","metro","metro"],trans:["Metro Linie 5","Metro Linie 1/AREX","KTX/ITX nach Daejeon","Fußweg","Fußweg","Fußweg","Metro Linie 1","Metro Linie 1"],det:["Optional vor Abfahrt","Premium-Department-Store","Transfer zum Bahnhof","Größtes städt. Arboretum","Wissenschaftsmesse-Gelände","Wahrzeichen mit Aufzug","Interaktive Ausstellungen","Kostenloses Fußbad"],tim:["15 Min.","1 Std.","~1 Std.","1 Std.","1,5 Std.","45 Min.","2 Std.","30 Min."],note:"A: Hanbat, Expo, Hanbit, Science Museum. B: The Hyundai, Yuseong Foot Bath."},
+  {id:"d22",num:"Tag 6",date:"22.08.2026",city:"Daejeon / Daegu",title:"Euneungjeongi & Daegu Tagesausflug",hotel:"Good Morning Residence Hue",kr:true,opt:false,stops:["Good Morning Residence Hue","Euneungjeongi Cultural Street Skyroad","Dongseong-ro Street Daegu","Daegu Modern History Museum","ST.GEUNDAE BAKERY Daegu","Seomun Market","83Tower E-World"],modes:["metro","train","walk","walk","walk","metro","metro"],trans:["Metro/Taxi","KTX nach Dongdaegu (50 Min.)","Fußweg","Fußweg","Fußweg","Metro Linie 1","Metro Linie 2 + Shuttle"],det:["Morgens vor Abfahrt","KTX Anreise Daegu","Zentrale Fußgängerzone","Modern History Museum","Lokale Spezialität","Traditioneller Textilmarkt","Aussichtsturm E-World"],tim:["20 Min.","50 Min.","30 Min.","45 Min.","30 Min.","1 Std.","2 Std."],note:"A: Euneungjeongi, Dongseong-ro, Museum, Bakery, Seomun. B: 83 Tower. C: Donghwasa oder Gakwonsa statt Daegu."},
+  {id:"d23",num:"Tag 7",date:"23.08.2026",city:"Daejeon → Busan",title:"Direkttransfer nach Busan",hotel:"Best Louis Hamilton Hotel Haeundae",kr:true,opt:false,stops:["Good Morning Residence Hue","Daejeon Station","Best Louis Hamilton Hotel Haeundae","Haeundae Beach","Club D Oasis Spa"],modes:["metro","train","walk","walk"],trans:["Metro/Taxi zum Bahnhof","KTX Daejeon → Busan (~1 Std. 40 Min.)","Fußweg (3 Min.)","Fußweg"],det:["Check-out, Transfer zum Bahnhof","Direkte KTX-Fahrt nach Busan","Check-in Hotel Haeundae","Berühmtester Strand Koreas","Korean Spa (Jjimjilbang)"],tim:["15 Min.","1 Std. 40 Min.","15 Min.","1 Std.","2 Std."],note:"A: Haeundae Beach, Club D Oasis Spa. Kein Bulguksa Temple mehr – direkter Transfer. Gepäck: Direkt mitnehmen oder Ta-Q-Bin."},
+  {id:"d24",num:"Tag 8",date:"24.08.2026",city:"Busan",title:"Sky Capsule, Gwangalli & Nachtspaziergang",hotel:"Best Louis Hamilton Hotel Haeundae",kr:true,opt:false,stops:["Best Louis Hamilton Hotel Haeundae","Haeundae Blue Line Park Mipo Station","Haeundae Sky Capsule","Gwangalli Beach","LASOOP cafe Busan","Haeundae Beach"],modes:["walk","train","train","metro","walk","metro"],trans:["Fußweg (10 Min.)","Beach Train (Blau)","Sky Capsule (Reservierung!)","Metro Linie 2","Fußweg","Metro Linie 2 zurück"],det:["Zur Mipo Station","Beach Train bis Cheongsapo","Mini-Monorail über Küste (30 Min.)","Blick auf Gwangan Bridge","Kaffee mit Meerblick","Nachtspaziergang Haeundae"],tim:["10 Min.","20 Min.","30 Min.","25 Min.","1 Std.","30 Min."],note:"A: Sky Capsule, Gwangalli. B: LASOOP, Nachtspaziergang. Sky Capsule 1-2 Wochen vorher buchen!"},
+  {id:"d25",num:"Tag 9",date:"25.08.2026",city:"Busan",title:"Songdo Kabelbahn & Sky Park",hotel:"Best Louis Hamilton Hotel Haeundae",kr:true,opt:false,stops:["Best Louis Hamilton Hotel Haeundae","Songdo Marine Cable Car","Songdo Sky Park Busan"],modes:["metro","walk"],trans:["Metro Linie 1 + Bus 7/26/30/71 (ca. 1 Std. 15 Min.)","Fußweg"],det:["Langer Weg nach West-Busan","Längste Seilbahn über dem Meer","Glasboden-Aussichtsplattform"],tim:["1 Std. 15 Min.","1 Std.","1,5 Std."],note:"A: Songdo Cable Car, Sky Park. Reserve: Club D Oasis oder Gwangalli bei schlechtem Wetter."},
+  {id:"d26",num:"Tag 10",date:"26.08.2026",city:"Fukuoka",title:"Hakata, Tenjin & Fukuoka Tower",hotel:"Hotel Trad Hakata",jp:true,opt:false,stops:["Hotel Trad Hakata","Canal City Hakata","Tocho-ji Temple","Tenjin Underground Shopping Center","Fukuoka Castle Ruins","Fukuoka Science Museum","Fukuoka Tower"],modes:["walk","walk","walk","metro","metro","metro","bus"],trans:["Fußweg (5 Min.)","Fußweg","Fußweg","Metro Linie 1","Metro/Bus","Metro","Bus/Taxi"],det:["Riesiges Shopping-Center","Zen-Tempel mit Holzbuddha","150 Läufe unter der Erde","Reste der Burg Maizuru","Optional","234 m Aussichtsturm"],tim:["5 Min.","1 Std.","15 Min.","1 Std.","30 Min.","45 Min.","1 Std."],note:"A: Canal City, Tocho-ji, Tenjin. B: Castle, Science Museum, Tower. C: Daihonzan Naritasan (separater Halbtag)."},
+  {id:"d27",num:"Tag 11",date:"27.08.2026",city:"Fukuoka → Hiroshima → Ōkunoshima → Fukuyama → Osaka",title:"Gundam, Hiroshima, Kanincheninsel, Fukuyama & Osaka",hotel:"Holiday Inn Osaka Namba by IHG",jp:true,opt:false,stops:["Hotel Trad Hakata","1RX-93ff Nu Gundam LaLaport Fukuoka","Hakata Station","Atomic Bomb Dome","Hiroshima Peace Memorial Park","Hiroshima National Peace Memorial Hall","Tadanoumi Station","Okunoshima Visitor Center","Fukuyama Station","Fukuyama Castle","Dotonbori","Hozenji Yokocho"],modes:["walk","walk","train","tram","walk","walk","train","ferry","train","walk","walk"],trans:["Fußweg/Bus","Fußweg","Shinkansen Hakata→Hiroshima (~1h 20min)","Hiroden Linie 1/2/6","Fußweg","Fußweg","JR Kure Linie nach Tadanoumi (~1h 20min)","Fähre Tadanoumi→Ōkunoshima (~15 Min.)","Fähre zurück + Zug Tadanoumi→Fukuyama (~45 Min.)","Shinkansen→Shin-Osaka","Fußweg (3 Min.)","Fußweg (2 Min.)"],det:["24 m Gundam Statue","Zur Shinkansen-Station","Schnellzug nach Hiroshima","UNESCO-Welterbe","Cenotaph & Friedensmuseum","Gedenkstätte","Zug nach Tadanoumi","Kanincheninsel – freilaufende Kaninchen, Ruinen","Fähre zurück + Zug nach Fukuyama","Kurzer Stopp am Bahnhof","Neonlichter & Street Food","Enge Gasse mit Restaurants"],tim:["10 Min.","1 Std.","1 Std. 20 Min.","1 Std.","30 Min.","1 Std.","1 Std. 20 Min.","2,5 Std.","45 Min.","30 Min.","45 Min.","2 Std."],note:"A: Gundam, A-Bomb Dome, Peace Park, Ōkunoshima, Dotonbori, Hozenji. B: Fukuyama Castle. Gepäck: Schließfach Hiroshima Station oder Takuhaibin empfohlen! Früher Start nötig – Ōkunoshima Fähren alle 30-60 Min."},
+  {id:"d28",num:"Tag 12",date:"28.08.2026",city:"Osaka",title:"Samurai, Burg & Umeda Sky",hotel:"Holiday Inn Osaka Namba by IHG",jp:true,opt:false,stops:["Holiday Inn Osaka Namba by IHG","Samurai and Ninja Experience Shinsaibashi","Grenier Patisserie Kitahama","Osaka Castle","Umeda Sky Building"],modes:["metro","metro","metro","metro","metro"],trans:["Metro Midosuji (rot)","Metro Nagahori (lila)","Metro Chuo (grün)","Metro Nagahori+Midosuji","Metro Midosuji zurück"],det:["Kostüm-Anprobe & Schwertkampf","Französische Konditorei","Wahrzeichen (8 Stockwerke Museum)","Floating Garden Observatory (170 m)"],tim:["5 Min.","1,5 Std.","10 Min.","1 Std.","15 Min.","1,5 Std."],note:"A: Samurai Experience, Osaka Castle, Umeda Sky. B: Grenier Patisserie. C: Kobe (Museum, Flower Clock, City Hall) oder Okunoshima (ganzer Tag)."},
+  {id:"d29",num:"Tag 13",date:"29.08.2026",city:"Kyoto (Tagesausflug)",title:"Nintendo, Toei, Arashiyama & Kamigamo",hotel:"Holiday Inn Osaka Namba by IHG",jp:true,opt:false,stops:["Holiday Inn Osaka Namba by IHG","Nintendo Museum Uji","Toei Kyoto Studio Park","Arashiyama Bamboo Forest","Kyoto Botanical Gardens","Kamigamo Shrine"],modes:["train","train","train","train","bus"],trans:["JR Kyoto→JR Nara Linie nach Uji (~1 Std.)","JR Nara zurück, Bus 71/73","Randen Keifuku","Metro Karasuma (grün)","Bus 4/46"],det:["Interaktive Nintendo-Geschichte (Ticket nötig!)","Samurai-Dorf & Ninja-Shows","Bambuswald","Ältester botanischer Garten","UNESCO-Schrein"],tim:["1 Std.","2 Std.","1 Std.","30 Min.","1,5 Std.","1 Std."],note:"A: Nintendo Museum, Toei, Arashiyama. B: Botanical Gardens, Kamigamo. C: Zenkyo-an (Name/Lage prüfen!). Nintendo-Tickets monatelang vorher buchen!"},
+  {id:"d30",num:"Tag 14",date:"30.08.2026",city:"Osaka → Nara",title:"Harukas, Sumiyoshi & Nara Park",hotel:"Onyado Nono Nara Natural Hot Spring",jp:true,opt:false,stops:["Holiday Inn Osaka Namba by IHG","Harukas 300","Sumiyoshi Taisha","Onyado Nono Nara Natural Hot Spring","Nara Park"],modes:["metro","metro","train","walk","walk"],trans:["Metro Midosuji","Nankai Hauptlinie (rot)","JR Yamatoji/Kintetsu nach Nara (45 Min.)","Fußweg (10 Min.)","Fußweg"],det:["Höchstes Gebäude Japans (300 m)","Ältester Schrein, Taiko-Brücke","Check-in Onsen-Hotel","Freilaufende Rehe, Todai-ji Buddha"],tim:["5 Min.","1 Std.","15 Min.","45 Min.","10 Min.","2-3 Std."],note:"A: Harukas 300, Sumiyoshi Taisha, Nara Park. Gepäck: Im Osaka-Hotel lassen oder mitnehmen."},
+  {id:"d31",num:"Tag 15",date:"31.08.2026",city:"Nara → Tokio",title:"Nara Reserve & teamLab Planets",hotel:"Sheraton Grande Tokyo Bay Hotel",jp:true,opt:false,stops:["Onyado Nono Nara Natural Hot Spring","Nara Park","Sheraton Grande Tokyo Bay Hotel","teamLab Planets TOKYO","Toyosu Senkyaku Banrai"],modes:["walk","train","monorail","walk"],trans:["Fußweg (Reserve)","Shinkansen Nara→Tokyo (~2,5 Std.)","Disney Resort Line / Yurikamome","Fußweg (5 Min.)"],det:["Kurzer Spaziergang falls 30.08. zu kurz","Transfer nach Tokio","Check-in Sheraton","Immersives Kunstmuseum (Ticket-Uhrzeit!)","Onsen-Entertainment-Viertel"],tim:["1 Std.","2,5 Std.","20 Min.","2 Std.","2 Std."],note:"A: teamLab Planets, Toyosu Senkyaku Banrai. B: Nara Reserve. teamLab-Tickets oft ausverkauft – früh buchen!"},
+  {id:"d32",num:"Tag 16",date:"01.09.2026",city:"Urayasu",title:"Tokyo Disneyland",hotel:"Sheraton Grande Tokyo Bay Hotel",jp:true,opt:false,stops:["Sheraton Grande Tokyo Bay Hotel","Tokyo Disneyland"],modes:["shuttle"],trans:["Hotel-Shuttle / Disney Resort Line (10 Min.)"],det:["Ganzer Tag im Tokyo Disneyland","Park 8:00–22:00"],tim:["10 Min.","Ganzer Tag"],note:"A: Disneyland. Disney Premier Access für beliebte Attraktionen empfohlen."},
+  {id:"d33",num:"Tag 17",date:"02.09.2026",city:"Tokio Ost & Zentrum",title:"Skytree, Asakusa (Senso-ji), Akihabara & Kaiserpalast",hotel:"Sheraton Grande Tokyo Bay Hotel",jp:true,opt:false,stops:["Sheraton Grande Tokyo Bay Hotel","Tokyo Skytree","Donguri Republic Tokyo Skytree Town Solamachi","Senso-ji Temple","Akihabara Electric Town","Imperial Palace Outer Gardens","My Basket supermarket Tokyo"],modes:["train","walk","metro","metro","metro","walk"],trans:["JR Keiyo→Sobu→Hanzomon (45 Min.)","Fußweg","Metro Asakusa (rot)","JR Yamanote/Metro Hibiya","Metro Hibiya","Fußweg"],det:["634 m – größter Turm der Welt","Ghibli-Fanshop Solamachi","Ältester Tempel Tokios","Elektronik, Anime, Manga","Frei zugängliche Gärten","Snacks/Getränke (Filialen an Route wählen)"],tim:["45 Min.","1,5 Std.","30 Min.","1 Std.","2 Std.","1 Std.","20 Min."],note:"A: Skytree, Senso-ji, Akihabara, Imperial Palace. B: Donguri Republic, My Basket."},
+  {id:"d34",num:"Tag 18",date:"03.09.2026",city:"Tokio Süd & West",title:"Tower, Shibuya, Shinjuku & Railway Museum",hotel:"Sheraton Grande Tokyo Bay Hotel",jp:true,opt:false,stops:["Sheraton Grande Tokyo Bay Hotel","Tokyo Tower","teamLab Borderless Azabudai Hills","Shibuya Crossing","Ebisu Hashian soba","Tokyo Metropolitan Government Building Observatory","The Railway Museum Saitama"],modes:["train","metro","metro","walk","metro","train"],trans:["JR Keiyo→Yamanote→Hibiya (40 Min.)","Metro Hibiya→Oedo (lila)","Metro Hibiya→Oedo","Fußweg","Metro Oedo/Yamanote","JR Yamanote→Keihin-Tohoku→New Shuttle nach Omiya (ca. 1 Std. 10 Min.)"],det:["Klassischer roter Turm (333 m)","Digitales Kunstmuseum","Berühmteste Kreuzung","Nudelrestaurant (Adresse prüfen!)","Kostenlose Aussicht (45. Stock)","Eisenbahnmuseum – historische Züge, Simulator, Modellbahn (2-3 Std.)"],tim:["40 Min.","1 Std.","15 Min.","1,5 Std.","30 Min.","1 Std.","1 Std. 10 Min.","2,5 Std."],note:"A: Tokyo Tower, Shibuya, Metropolitan Gov, Railway Museum. B: teamLab Borderless, Ebisu Hashian. C: Warner Bros. Harry Potter (Alternativ-Tag statt Railway Museum). Früher Start empfohlen – Saitama liegt ca. 35 km nördlich."},
+  {id:"d35",num:"Tag 19",date:"04.09.2026",city:"Tokio → Narita",title:"Abreise",hotel:"-",jp:true,opt:false,stops:["Sheraton Grande Tokyo Bay Hotel","Narita International Airport"],modes:["train"],trans:["Airport Limousine Bus / JR Narita Express (ca. 1 Std.) / Keisei Skyliner (ca. 40 Min.)"],det:["Check-out bis 11:00, Gepäck packen, letzte Einkäufe","Transfer zum Narita Flughafen – Abflug 22:30 Uhr"],tim:["1 Std. (Narita Express) / 40 Min. (Skyliner)"],note:"Abflug 22:30 Uhr von Narita (NRT). Empfohlen: Ab 19:00 Uhr Richtung Flughafen aufbrechen. Keine weit entfernten Punkte mehr planen – nur entspannter Vormittag/Mittag in der Nähe des Hotels."},
+];
+
+const MODE_COLORS = {walk:'#27ae60',metro:'#2980b9',train:'#8e44ad',car:'#e74c3c',bus:'#f39c12',shinkansen:'#e84393',plane:'#00cec9',ferry:'#00b894',cablecar:'#9b59b6',monorail:'#6c5ce7',shuttle:'#636e72',tram:'#00b894'};
+
+/* ============================================================
+   KARTE
+   ============================================================ */
+const map = L.map('map',{zoomControl:false}).setView([36.5,128.5],6);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+let layers=[],markers=[];
+function clearMap(){layers.forEach(l=>map.removeLayer(l));markers.forEach(m=>map.removeLayer(m));layers=[];markers=[];}
+
+function getIcon(type,num){
+  const colors={hotel:'#d35400',airport:'#e74c3c',station:'#8e44ad',temple:'#27ae60',palace:'#f39c12',museum:'#2980b9',park:'#27ae60',beach:'#3498db',shopping:'#e84393',viewpoint:'#9b59b6',culture:'#16a085',food:'#e67e22',nature:'#2ecc71',memorial:'#7f8c8d',castle:'#c0392b',amusement:'#ff6b6b',spa:'#00cec9',activity:'#fdcb6e',transport:'#6c5ce7',fortress:'#636e72',hike:'#00b894',street:'#d63031',nightlife:'#2d3436',market:'#e17055'};
+  const c=colors[type]||'#2c7873';
+  return L.divIcon({className:'custom-marker',html:`<div style="width:28px;height:28px;background:${c};border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:bold;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">${num}</div>`,iconSize:[28,28],iconAnchor:[14,14]});
+}
+
+function haversine(a,b){
+  const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180;
+  const h=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))*10)/10;
+}
+
+function buildNaverLink(stops){
+  const coords=stops.map(s=>LOC[s]?`${LOC[s].lng},${LOC[s].lat}`:null).filter(Boolean);
+  if(coords.length<2)return'#';
+  const waypoints=coords.slice(1,-1).join(',');
+  let url=`https://map.naver.com/v5/directions/${coords[0]},${encodeURIComponent(stops[0])}::${coords[coords.length-1]},${encodeURIComponent(stops[stops.length-1])}::car?c=14,0,0,0,dh`;
+  if(waypoints)url+=`&waypoints=${waypoints}`;
+  return url;
+}
+
+function buildGoogleLink(stops){
+  const coords=stops.map(s=>LOC[s]?`${LOC[s].lat},${LOC[s].lng}`:null).filter(Boolean);
+  if(coords.length<2)return'#';
+  let url=`https://www.google.com/maps/dir/?api=1&origin=${coords[0]}&destination=${coords[coords.length-1]}&travelmode=transit`;
+  if(coords.length>2)url+=`&waypoints=${coords.slice(1,-1).join('|')}`;
+  return url;
+}
+
+function flyTo(lat,lng,z){map.flyTo([lat,lng],z,{duration:1.2});}
+
+/* ============================================================
+   RENDER TAGE
+   ============================================================ */
+function renderDay(id){
+  clearMap();
+  if(id==='costs'){
+    document.querySelectorAll('.day-btn').forEach(b=>b.classList.toggle('active',b.dataset.id==='costs'));
+    document.querySelectorAll('.day-content').forEach(p=>p.classList.toggle('active',p.dataset.id==='costs'));
+    renderCostApp();
+    map.setView([35.68,139.76],5);
+    return;
+  }
+  if(id==='restaurants'){
+    document.querySelectorAll('.day-btn').forEach(b=>b.classList.toggle('active',b.dataset.id==='restaurants'));
+    document.querySelectorAll('.day-content').forEach(p=>p.classList.toggle('active',p.dataset.id==='restaurants'));
+    renderRestApp();
+    map.setView([35.68,139.76],5);
+    return;
+  }
+  const day=DAYS.find(d=>d.id===id); if(!day)return;
+  document.querySelectorAll('.day-btn').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+  document.querySelectorAll('.day-content').forEach(p=>p.classList.toggle('active',p.dataset.id===id));
+  const bounds=[];
+  day.stops.forEach((stop,i)=>{
+    const loc=LOC[stop]; if(!loc)return;
+    bounds.push([loc.lat,loc.lng]);
+    const isHotel=loc.t==='hotel';
+    const num=isHotel?'H':(i+1);
+    const marker=L.marker([loc.lat,loc.lng],{icon:getIcon(loc.t,num)}).addTo(map)
+      .bindPopup(`<b>${stop}</b><br><span style="font-size:0.8rem;color:#666">${loc.t.toUpperCase()}</span><br><span style="font-size:0.75rem">${day.det[i]||''}</span>`);
+    markers.push(marker);
+  });
+  for(let i=0;i<day.stops.length-1;i++){
+    const a=LOC[day.stops[i]],b=LOC[day.stops[i+1]];
+    if(!a||!b)continue;
+    const mode=day.modes[i]||'walk';
+    const col=MODE_COLORS[mode]||'#999';
+    const line=L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{color:col,weight:4,opacity:0.85,dashArray:mode==='walk'?'8,6':null}).addTo(map);
+    layers.push(line);
+  }
+  if(bounds.length)map.fitBounds(bounds,{padding:[60,60],maxZoom:14});
+}
+
+/* ============================================================
+   INIT UI
+   ============================================================ */
+const timeline=document.getElementById('timeline');
+const sidebar=document.getElementById('sidebar');
+
+DAYS.forEach((day,idx)=>{
+  const btn=document.createElement('div');
+  btn.className='day-btn'+(idx===0?' active':'');
+  btn.dataset.id=day.id;
+  btn.innerHTML=`<span class="d-num">${day.num}</span><span class="d-date">${day.date}</span><span class="d-city">${day.city}</span>`;
+  btn.onclick=()=>{renderDay(day.id);const el=document.querySelector(`.day-content[data-id="${day.id}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
+  timeline.appendChild(btn);
+});
+
+const costBtn=document.createElement('div');
+costBtn.className='day-btn cost-tab-btn';
+costBtn.dataset.id='costs';
+costBtn.innerHTML='<span class="d-num">💰</span><span class="d-date">Kosten</span><span class="d-city">Abrechnung</span>';
+costBtn.onclick=()=>{renderDay('costs');};
+timeline.appendChild(costBtn);
+
+const restBtn=document.createElement('div');
+restBtn.className='day-btn';
+restBtn.style.borderColor='var(--secondary)';
+restBtn.style.color='var(--secondary)';
+restBtn.dataset.id='restaurants';
+restBtn.innerHTML='<span class="d-num">🍽️</span><span class="d-date">Restaurants</span><span class="d-city">Empfehlungen</span>';
+restBtn.onclick=()=>{renderDay('restaurants');};
+timeline.appendChild(restBtn);
+
+DAYS.forEach((day,idx)=>{
+  const panel=document.createElement('div');
+  panel.className='day-content'+(idx===0?' active':'');
+  panel.dataset.id=day.id;
+  let badges='';
+  if(day.hotel&&day.hotel!=='-')badges+=`<span class="badge badge-hotel">🏨 ${day.hotel}</span>`;
+  let routeHTML=''; let totalDist=0;
+  day.stops.forEach((stop,i)=>{
+    const loc=LOC[stop]; const isHotel=loc&&loc.t==='hotel';
+    const num=isHotel?'H':(i+1);
+    const mode=day.modes[i-1];
+    const tClass=mode?'t-'+mode:'';
+    const tLabel=mode?({walk:'Fußweg',metro:'U-Bahn',train:'Zug',car:'Auto/Taxi',bus:'Bus',shinkansen:'Shinkansen',plane:'Flug',ferry:'Fähre',cablecar:'Seilbahn',monorail:'Einschienenbahn',shuttle:'Shuttle',tram:'Straßenbahn'})[mode]:'';
+    let distStr='';
+    if(i>0&&loc&&LOC[day.stops[i-1]]){const d=haversine(LOC[day.stops[i-1]],loc);totalDist+=d;distStr=`~${d} km`;}
+    routeHTML+=`<div class="route-item"><div class="route-connector"></div><div class="route-num ${isHotel?'hotel':''}">${num}</div><div class="route-body"><div class="route-name">${stop}</div><div class="route-desc">${day.det[i]||''} ${distStr?'<b>• '+distStr+'</b>':''}</div>${day.trans[i]?`<span class="transport-tag ${tClass}">${tLabel?tLabel+': ':''}${day.trans[i]}</span>`:''}${day.tim[i]?`<div class="route-time">⏱ ${day.tim[i]}</div>`:''}</div></div>`;
+  });
+  const mapLink=day.kr?buildNaverLink(day.stops):buildGoogleLink(day.stops);
+  const btnClass=day.kr?'btn-maps-kr':'btn-maps-jp';
+  const btnText=day.kr?'🗺 In Naver Maps öffnen':'🗺 In Google Maps öffnen';
+  panel.innerHTML=`<div class="day-header"><h2>${day.title}</h2><div class="day-sub">${day.city}</div><div class="day-date">${day.date} • ${day.num}</div></div><div class="badges">${badges}</div>${day.note?`<div class="note-box">ℹ️ ${day.note}</div>`:''}<div class="sec-divider">📍 Route & Sehenswürdigkeiten</div><div class="route-list">${routeHTML}</div><div class="dist-summary"><strong>📏 Gesamtstrecke (Luftlinie):</strong> ~${Math.round(totalDist*10)/10} km<br><span style="font-size:0.75rem;color:var(--muted)">Tatsächliche Route kann abweichen.</span></div><div class="actions"><a class="btn ${btnClass}" href="${mapLink}" target="_blank">${btnText}</a><button class="btn btn-center" onclick="renderDay('${day.id}')">🎯 Karte zentrieren</button></div>`;
+  sidebar.appendChild(panel);
+});
+
+const costPanel=document.createElement('div');
+costPanel.className='day-content cost-panel';
+costPanel.dataset.id='costs';
+costPanel.innerHTML=`<div id="cost-app"></div>`;
+sidebar.appendChild(costPanel);
+
+const restPanel=document.createElement('div');
+restPanel.className='day-content';
+restPanel.dataset.id='restaurants';
+restPanel.innerHTML=`<div id="rest-app"></div>`;
+sidebar.appendChild(restPanel);
+
+renderDay('d17');
+
+/* ============================================================
+   KOSTEN-APP
+   ============================================================ */
+let costFilter = 'all';
+let costTab = 'overview';
+
+function renderCostApp(){
+  const app=document.getElementById('cost-app');
+  const session = getSession();
+  if(!session.name){
+    app.innerHTML = buildLoginScreen();
+    return;
+  }
+  if(session.role === 'admin'){
+    app.innerHTML = buildAdminDashboard(session);
+  } else {
+    app.innerHTML = buildUserDashboard(session);
+  }
+}
+
+/* ---------- LOGIN ---------- */
+function buildLoginScreen(){
+  const regularUsers = USERS.filter(u=>u.role==='user');
+  let userButtons = regularUsers.map(u=>`
+    <button class="login-user-btn" onclick="selectUser('${esc(u.name)}')">
+      <div class="lu-avatar">${u.name.split(' ').map(n=>n[0]).join('').substring(0,2)}</div>
+      <div style="flex:1;text-align:left;"><div class="lu-name">${esc(u.name)}</div><div class="lu-role">Reiseteilnehmer</div></div>
+    </button>
+  `).join('');
+
+  return `
+    <div class="cost-login-wrap">
+      <div class="cost-empty-icon">🔐</div>
+      <h3>Kostenabrechnung – Anmeldung</h3>
+      <p>Wähle deinen Namen aus der Liste oder melde dich als Admin an.</p>
+      <div class="login-grid">${userButtons}
+        <button class="login-user-btn" onclick="toggleAdminLogin()" style="border-color:var(--warning);background:var(--warning-light);">
+          <div class="lu-avatar" style="background:linear-gradient(135deg,var(--warning),var(--secondary));">👑</div>
+          <div style="flex:1;text-align:left;"><div class="lu-name">Administrator</div><div class="lu-role">Admin-Zugang</div></div>
+        </button>
+      </div>
+      <div id="admin-login-form" style="display:none;">
+        <div class="login-form">
+          <input type="text" id="login-name" placeholder="Benutzername" value="Admin">
+          <input type="password" id="login-pass" placeholder="Passwort">
+          <div class="login-error" id="login-error" style="display:none;">❌ Benutzername oder Passwort falsch.</div>
+          <button onclick="doLogin()">Anmelden</button>
+        </div>
+      </div>
+      <div id="user-login-form" style="display:none;">
+        <div class="login-form">
+          <input type="text" id="login-name-user" placeholder="Benutzername" readonly style="background:#f8f9fa;">
+          <input type="password" id="login-pass-user" placeholder="Passwort">
+          <div class="login-error" id="login-error-user" style="display:none;">❌ Passwort falsch.</div>
+          <button onclick="doUserLogin()">Anmelden</button>
+          <div class="login-toggle" onclick="backToUserList()">← Zurück zur Liste</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function selectUser(name){
+  document.getElementById('admin-login-form').style.display='none';
+  const form = document.getElementById('user-login-form');
+  form.style.display='block';
+  document.getElementById('login-name-user').value = name;
+  document.getElementById('login-error-user').style.display='none';
+  setTimeout(()=>{const el=document.getElementById('login-pass-user');if(el)el.focus();},50);
+}
+
+function toggleAdminLogin(){
+  document.getElementById('user-login-form').style.display='none';
+  const form = document.getElementById('admin-login-form');
+  const show = form.style.display==='none';
+  form.style.display = show?'block':'none';
+  if(show) setTimeout(()=>{const el=document.getElementById('login-pass');if(el)el.focus();},50);
+}
+
+function backToUserList(){
+  document.getElementById('user-login-form').style.display='none';
+  document.getElementById('admin-login-form').style.display='none';
+}
+
+function doLogin(){
+  const name = document.getElementById('login-name').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const user = USERS.find(u=>u.name===name && u.pass===pass);
+  if(!user){ document.getElementById('login-error').style.display='block'; return; }
+  setSession({name:user.name, role:user.role});
+  renderCostApp();
+}
+
+function doUserLogin(){
+  const name = document.getElementById('login-name-user').value.trim();
+  const pass = document.getElementById('login-pass-user').value.trim();
+  const user = USERS.find(u=>u.name===name && u.pass===pass);
+  if(!user){ document.getElementById('login-error-user').style.display='block'; return; }
+  setSession({name:user.name, role:user.role});
+  renderCostApp();
+}
+
+/* ---------- USER DASHBOARD ---------- */
+function buildUserDashboard(session){
+  const data = getCostData();
+  const myName = session.name;
+  const myExpenses = data.expenses.filter(e=>e.payer===myName);
+  const myTransfersSent = data.transfers.filter(t=>t.from===myName);
+  const myTransfersRecv = data.transfers.filter(t=>t.to===myName);
+
+  // Eigene Kosten nach Status
+  const myBar = myExpenses.filter(e=>e.status==='offen').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const myOffenUeber = myExpenses.filter(e=>e.status==='offen_überweisung').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const myBezahlt = myExpenses.filter(e=>e.status==='bezahlt').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const myBezahltUeber = myExpenses.filter(e=>e.status==='bezahlt_überweisung').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const myPaid = myExpenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+
+   let html = `
+    <div class="cost-topbar">
+      <h3>💰 Meine Kosten</h3>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="user-chip">👤 ${esc(myName)}</span>
+        <button class="logout-btn" onclick="costLogout()">🚪 Abmelden</button>
+      </div>
+    </div>
+
+    <!-- ☁️ SYNC-BUTTONS (User) -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button id="sync-btn" class="btn" style="background:linear-gradient(135deg,#4285f4,#34a853);color:#fff;" onclick="pushToCloud()">☁️ In Google Drive speichern</button>
+      <button id="sync-pull-btn" class="btn" style="background:linear-gradient(135deg,#fbbc05,#ea4335);color:#fff;" onclick="pullFromCloud()">📥 Aus Google Drive laden</button>
+      <button class="btn btn-center" onclick="saveFileWithData()">💾 Als Datei speichern (Backup)</button>
+    </div>
+    ${renderSyncStatus()}
+
+    <div class="cost-summary">`;
+
+    html += `
+      <div class="cost-card"><div class="label">Gesamt</div><div class="value">${fmt(myPaid)} ${data.currency}</div></div>
+      <div class="cost-card"><div class="label">Bar vor Ort</div><div class="value warning">${fmt(myBar)} ${data.currency}</div></div>
+      <div class="cost-card"><div class="label">Überweisung offen</div><div class="value purple">${fmt(myOffenUeber)} ${data.currency}</div></div>
+      <div class="cost-card"><div class="label">Bezahlt</div><div class="value positive">${fmt(myBezahlt)} ${data.currency}</div></div>
+      <div class="cost-card"><div class="label">Bezahlt (Überw.)</div><div class="value positive">${fmt(myBezahltUeber)} ${data.currency}</div></div>
+    </div>
+
+    <div class="cost-tabs">
+      <button class="cost-tab ${costTab==='overview'?'active':''}" onclick="setCostTab('overview')">📊 Übersicht</button>
+      <button class="cost-tab ${costTab==='costs'?'active':''}" onclick="setCostTab('costs')">📝 Meine Kosten</button>
+      <button class="cost-tab ${costTab==='transfers'?'active':''}" onclick="setCostTab('transfers')">💸 Überweisungen</button>
+      
+    </div>
+  `;
+
+  if(costTab==='overview'){
+    html += `<div class="tab-panel active">`;
+    html += `
+      <div class="form-section">
+        <h4>➕ Neue Kosten hinzufügen</h4>
+        <div class="form-row form-row-4">
+          <input type="text" id="u-desc" placeholder="Bezeichnung (z.B. Hotel, Essen, Ticket)">
+          <input type="number" id="u-amount" placeholder="Betrag (€)" min="0" step="0.01">
+          <input type="date" id="u-date" value="${todayStr()}">
+          <select id="u-status">
+            <option value="offen">🟡 Offen – Bar vor Ort</option>
+            <option value="offen_überweisung">💳 Offen – Überweisung</option>
+            <option value="bezahlt">🟢 Bezahlt</option>
+            <option value="bezahlt_überweisung">✅ Bezahlt – Überweisung</option>
+          </select>
+        </div>
+        <div class="form-row form-row-2" style="max-width:300px;">
+          <button onclick="addUserCost()">💾 Kosten speichern</button>
+        </div>
+      </div>
+    `;
+    html += `
+      <div class="form-section">
+        <h4>💸 Überweisung eintragen</h4>
+        <div class="form-row form-row-5">
+          <input type="text" id="ut-desc" placeholder="Zweck der Überweisung">
+          <input type="number" id="ut-amount" placeholder="Betrag (€)" min="0" step="0.01">
+          <input type="date" id="ut-date" value="${todayStr()}">
+          <select id="ut-to">${getUserOptions(myName)}</select>
+          <select id="ut-status"><option value="pending">🟡 Nicht erhalten</option><option value="received">🟢 Erhalten</option></select>
+        </div>
+        <div class="form-row form-row-2" style="max-width:300px;">
+          <button onclick="addUserTransfer()" class="btn-info">💾 Überweisung speichern</button>
+        </div>
+      </div>
+    `;
+    html += `<div class="section-title">📊 Zusammenfassung meiner Kosten</div>`;
+    html += `<div class="cost-table-wrap"><table class="cost-table"><thead><tr><th>Status</th><th>Anzahl</th><th class="amount">Betrag</th></tr></thead><tbody>`;
+    html += `<tr class="status-bar"><td><span class="status-badge status-bar">🟡 Bar vor Ort</span></td><td>${myExpenses.filter(e=>e.status==='offen').length}</td><td class="amount">${fmt(myBar)} ${data.currency}</td></tr>`;
+    html += `<tr class="status-ueber"><td><span class="status-badge status-ueber">💳 Überweisung offen</span></td><td>${myExpenses.filter(e=>e.status==='offen_überweisung').length}</td><td class="amount">${fmt(myOffenUeber)} ${data.currency}</td></tr>`;
+    html += `<tr class="status-paid"><td><span class="status-badge status-paid">🟢 Bezahlt</span></td><td>${myExpenses.filter(e=>e.status==='bezahlt').length}</td><td class="amount">${fmt(myBezahlt)} ${data.currency}</td></tr>`;
+    html += `<tr class="status-paid"><td><span class="status-badge status-paid">✅ Bezahlt – Überweisung</span></td><td>${myExpenses.filter(e=>e.status==='bezahlt_überweisung').length}</td><td class="amount">${fmt(myBezahltUeber)} ${data.currency}</td></tr>`;
+    html += `<tr style="font-weight:700;"><td>Gesamt</td><td>${myExpenses.length}</td><td class="amount">${fmt(myPaid)} ${data.currency}</td></tr>`;
+    html += `</tbody></table></div>`;
+    if(myTransfersSent.length>0 || myTransfersRecv.length>0){
+      html += `<div class="section-title">💸 Meine Überweisungen</div>`;
+      const sentTotal = myTransfersSent.reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+      const recvTotal = myTransfersRecv.filter(t=>t.received).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+      const pendingTotal = myTransfersRecv.filter(t=>!t.received).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+      html += `<div class="cost-summary" style="grid-template-columns:repeat(3,1fr);">`;
+      html += `<div class="cost-card"><div class="label">Gesendet</div><div class="value">${fmt(sentTotal)} ${data.currency}</div></div>`;
+      html += `<div class="cost-card"><div class="label">Erhalten</div><div class="value positive">${fmt(recvTotal)} ${data.currency}</div></div>`;
+      html += `<div class="cost-card"><div class="label">Ausstehend</div><div class="value warning">${fmt(pendingTotal)} ${data.currency}</div></div>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  if(costTab==='costs'){
+    html += `<div class="tab-panel active">`;
+    html += `<div class="filter-bar">
+      <button class="filter-btn ${costFilter==='all'?'active':''}" onclick="setFilter('all')">Alle</button>
+      <button class="filter-btn ${costFilter==='offen'?'active':''}" onclick="setFilter('offen')">🟡 Bar vor Ort</button>
+      <button class="filter-btn ${costFilter==='offen_überweisung'?'active':''}" onclick="setFilter('offen_überweisung')">💳 Überweisung offen</button>
+      <button class="filter-btn ${costFilter==='bezahlt'?'active':''}" onclick="setFilter('bezahlt')">🟢 Bezahlt</button>
+      <button class="filter-btn ${costFilter==='bezahlt_überweisung'?'active':''}" onclick="setFilter('bezahlt_überweisung')">✅ Bezahlt (Überw.)</button>
+    </div>`;
+    let filtered = myExpenses;
+    if(costFilter!=='all') filtered = filtered.filter(e=>e.status===costFilter);
+    html += `<div class="section-title">📝 Meine Kosten (${filtered.length})</div>`;
+    if(filtered.length===0){
+      html += `<div class="cost-empty"><div class="cost-empty-icon">📝</div><h4>Keine Kosten gefunden</h4></div>`;
+    } else {
+      html += `<div class="cost-table-wrap"><table class="cost-table"><thead><tr><th>Datum</th><th>Bezeichnung</th><th>Status</th><th class="amount">Betrag</th><th></th></tr></thead><tbody>`;
+      [...filtered].reverse().forEach(ex=>{
+        const realIdx = data.expenses.indexOf(ex);
+        const si = getStatusInfo(ex.status);
+        html += `<tr class="status-${ex.status}"><td>${ex.date||'-'}</td><td>${esc(ex.desc)}</td><td><span class="status-badge ${si.cls}" onclick="toggleCostStatus(${realIdx})" title="Klicken zum Ändern">${si.label}</span></td><td class="amount">${fmt(ex.amount)} ${data.currency}</td><td><div class="table-actions"><button class="toggle-btn" onclick="toggleCostStatus(${realIdx})" title="Status ändern">🔄</button><button class="delete-btn" onclick="deleteCost(${realIdx})">🗑</button></div></td></tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+  }
+
+  if(costTab==='transfers'){
+    html += `<div class="tab-panel active">`;
+    html += `<div class="section-title">📤 Gesendete Überweisungen (${myTransfersSent.length})</div>`;
+    if(myTransfersSent.length===0){
+      html += `<div class="cost-empty"><div class="cost-empty-icon">📤</div><h4>Keine gesendeten Überweisungen</h4></div>`;
+    } else {
+      html += `<div class="cost-table-wrap"><table class="cost-table"><thead><tr><th>Datum</th><th>Zweck</th><th>An</th><th>Status beim Empfänger</th><th class="amount">Betrag</th><th></th></tr></thead><tbody>`;
+      [...myTransfersSent].reverse().forEach(tr=>{
+        const realIdx = data.transfers.indexOf(tr);
+        const statusClass = tr.received?'status-received':'status-pending';
+        const statusLabel = tr.received?'Erhalten':'Nicht erhalten';
+        html += `<tr class="${tr.received?'transfer-row':''}"><td>${tr.date||'-'}</td><td>${esc(tr.desc)}</td><td class="payer">${esc(tr.to)}</td><td><span class="status-badge ${statusClass}">${statusLabel}</span></td><td class="amount">${fmt(tr.amount)} ${data.currency}</td><td><button class="delete-btn" onclick="deleteTransfer(${realIdx})">🗑</button></td></tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    html += `<div class="section-title">📥 Erhaltene Überweisungen (${myTransfersRecv.length})</div>`;
+    if(myTransfersRecv.length===0){
+      html += `<div class="cost-empty"><div class="cost-empty-icon">📥</div><h4>Keine erhaltenen Überweisungen</h4></div>`;
+    } else {
+      html += `<div class="cost-table-wrap"><table class="cost-table"><thead><tr><th>Datum</th><th>Zweck</th><th>Von</th><th>Status</th><th class="amount">Betrag</th></tr></thead><tbody>`;
+      [...myTransfersRecv].reverse().forEach(tr=>{
+        const statusClass = tr.received?'status-received':'status-pending';
+        const statusLabel = tr.received?'Erhalten':'Nicht erhalten';
+        html += `<tr class="${tr.received?'transfer-row':''}"><td>${tr.date||'-'}</td><td>${esc(tr.desc)}</td><td class="payer">${esc(tr.from)}</td><td><span class="status-badge ${statusClass}">${statusLabel}</span></td><td class="amount">${fmt(tr.amount)} ${data.currency}</td></tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+  }
+
+
+
+  return html;
+}
+
+/* ---------- ADMIN DASHBOARD ---------- */
+function buildAdminDashboard(session){
+  const data = getCostData();
+  const totals = calcTotals(data);
+  const userList = USERS.filter(u=>u.role==='user').map(u=>u.name);
+
+  // Kosten nach Status
+  const totalBar = data.expenses.filter(e=>e.status==='offen').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const totalOffenUeber = data.expenses.filter(e=>e.status==='offen_überweisung').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const totalBezahlt = data.expenses.filter(e=>e.status==='bezahlt').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const totalBezahltUeber = data.expenses.filter(e=>e.status==='bezahlt_überweisung').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const totalExp = data.expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const totalTransfers = data.transfers.reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+  const totalRecv = data.transfers.filter(t=>t.received).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+
+    let html = `
+    <div class="cost-topbar">
+      <h3>👑 Admin Dashboard – Gruppenabrechnung</h3>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="user-chip admin-chip">👑 ${esc(session.name)}</span>
+        <button class="logout-btn" onclick="costLogout()">🚪 Abmelden</button>
+      </div>
+    </div>
+
+    <!-- ☁️ SYNC-BUTTONS (Admin) -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button id="sync-btn" class="btn" style="background:linear-gradient(135deg,#4285f4,#34a853);color:#fff;" onclick="pushToCloud()">☁️ In Google Drive speichern</button>
+      <button id="sync-pull-btn" class="btn" style="background:linear-gradient(135deg,#fbbc05,#ea4335);color:#fff;" onclick="pullFromCloud()">📥 Aus Google Drive laden</button>
+      <button class="btn btn-center" onclick="saveFileWithData()">💾 Als Datei speichern (Backup)</button>
+      <button class="btn btn-center" onclick="exportJSON()">📤 JSON exportieren</button>
+      <button class="btn btn-center" onclick="importJSON()">📥 JSON importieren</button>
+    </div>
+    ${renderSyncStatus()}
+
+    <div class="group-totals">`;
+
+    html += `
+      <h4>📊 Gruppenübersicht</h4>
+      <div class="group-totals-grid">
+        <div class="gt-item"><div class="gt-val">${fmt(totalExp)}</div><div class="gt-label">Gesamtkosten</div></div>
+        <div class="gt-item"><div class="gt-val" style="color:#ffcc80;">${fmt(totalBar)}</div><div class="gt-label">Bar vor Ort</div></div>
+        <div class="gt-item"><div class="gt-val" style="color:#ce93d8;">${fmt(totalOffenUeber)}</div><div class="gt-label">Überw. offen</div></div>
+        <div class="gt-item"><div class="gt-val" style="color:#a5d6a7;">${fmt(totalBezahlt)}</div><div class="gt-label">Bezahlt</div></div>
+        <div class="gt-item"><div class="gt-val" style="color:#a5d6a7;">${fmt(totalBezahltUeber)}</div><div class="gt-label">Bezahlt (Überw.)</div></div>
+        <div class="gt-item"><div class="gt-val">${fmt(totals.perPerson)}</div><div class="gt-label">Anteil/Person</div></div>
+      </div>
+    </div>
+
+    <div class="cost-tabs">
+      <button class="cost-tab ${costTab==='overview'?'active':''}" onclick="setCostTab('overview')">👥 Personen</button>
+      <button class="cost-tab ${costTab==='allcosts'?'active':''}" onclick="setCostTab('allcosts')">📋 Alle Kosten</button>
+      <button class="cost-tab ${costTab==='transfers'?'active':''}" onclick="setCostTab('transfers')">💸 Überweisungen</button>
+      <button class="cost-tab ${costTab==='add'?'active':''}" onclick="setCostTab('add')">➕ Hinzufügen</button>
+      
+    </div>
+  `;
+
+  if(costTab==='overview'){
+    html += `<div class="tab-panel active">`;
+    html += `<div class="admin-summary-grid">`;
+    userList.forEach(u=>{
+      const uPaid = totals.paid[u]||0;
+      const uBal = uPaid - totals.perPerson;
+      const uCount = data.expenses.filter(e=>e.payer===u).length;
+      const uBar = data.expenses.filter(e=>e.payer===u&&e.status==='offen').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+      const uOffenUeber = data.expenses.filter(e=>e.payer===u&&e.status==='offen_überweisung').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+      const uBezahlt = data.expenses.filter(e=>e.payer===u&&e.status==='bezahlt').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+      const uBezahltUeber = data.expenses.filter(e=>e.payer===u&&e.status==='bezahlt_überweisung').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+      const uTransSent = data.transfers.filter(t=>t.from===u).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+      const uTransRecv = data.transfers.filter(t=>t.to===u&&t.received).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+      html += `
+        <div class="admin-user-card">
+          <div class="auc-name">${esc(u)}</div>
+          <div class="auc-role">Reiseteilnehmer</div>
+          <div class="auc-row"><span>Ausgaben:</span><strong>${fmt(uPaid)} ${data.currency}</strong></div>
+          <div class="auc-row"><span>Anteil:</span><strong>${fmt(totals.perPerson)} ${data.currency}</strong></div>
+          <div class="auc-row"><span>Bar vor Ort:</span><strong style="color:var(--warning);">${fmt(uBar)} ${data.currency}</strong></div>
+          <div class="auc-row"><span>Überw. offen:</span><strong style="color:var(--purple);">${fmt(uOffenUeber)} ${data.currency}</strong></div>
+          <div class="auc-row"><span>Bezahlt:</span><strong style="color:var(--success);">${fmt(uBezahlt)} ${data.currency}</strong></div>
+          <div class="auc-row"><span>Bezahlt (Überw.):</span><strong style="color:var(--success);">${fmt(uBezahltUeber)} ${data.currency}</strong></div>
+          <div class="auc-row"><span>Überw. gesendet:</span><strong>${fmt(uTransSent)} ${data.currency}</strong></div>
+          <div class="auc-row"><span>Überw. erhalten:</span><strong style="color:var(--success);">${fmt(uTransRecv)} ${data.currency}</strong></div>
+          <div class="auc-balance ${uBal>0?'positive':(uBal<0?'negative':'neutral')}">${uBal>0?'+':''}${fmt(uBal)} ${data.currency}</div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+    html += `<div class="section-title">⚖️ Detaillierte Abrechnung</div>`;
+    html += `<div class="cost-table-wrap"><table class="cost-table"><thead><tr><th>Person</th><th>Ausgaben</th><th>Anteil</th><th>Balance</th><th>Status</th></tr></thead><tbody>`;
+    userList.forEach(u=>{
+      const uPaid = totals.paid[u]||0;
+      const uBal = uPaid - totals.perPerson;
+      let status = '';
+      if(uBal>0.01) status = `<span class="status-badge status-paid">Bekommt ${fmt(uBal)}</span>`;
+      else if(uBal<-0.01) status = `<span class="status-badge status-open">Schuldet ${fmt(Math.abs(uBal))}</span>`;
+      else status = `<span class="status-badge status-paid">Ausgeglichen</span>`;
+      html += `<tr><td class="payer">${esc(u)}</td><td class="amount">${fmt(uPaid)} ${data.currency}</td><td class="amount">${fmt(totals.perPerson)} ${data.currency}</td><td class="amount ${uBal>0?'positive':(uBal<0?'negative':'')}">${uBal>0?'+':''}${fmt(uBal)} ${data.currency}</td><td>${status}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+    html += `</div>`;
+  }
+
+  if(costTab==='allcosts'){
+    html += `<div class="tab-panel active">`;
+    html += `<div class="filter-bar">
+      <button class="filter-btn ${costFilter==='all'?'active':''}" onclick="setFilter('all')">Alle</button>
+      <button class="filter-btn ${costFilter==='offen'?'active':''}" onclick="setFilter('offen')">🟡 Bar vor Ort</button>
+      <button class="filter-btn ${costFilter==='offen_überweisung'?'active':''}" onclick="setFilter('offen_überweisung')">💳 Überweisung offen</button>
+      <button class="filter-btn ${costFilter==='bezahlt'?'active':''}" onclick="setFilter('bezahlt')">🟢 Bezahlt</button>
+      <button class="filter-btn ${costFilter==='bezahlt_überweisung'?'active':''}" onclick="setFilter('bezahlt_überweisung')">✅ Bezahlt (Überw.)</button>
+    </div>`;
+    let filtered = data.expenses;
+    if(costFilter!=='all') filtered = filtered.filter(e=>e.status===costFilter);
+    html += `<div class="section-title">📋 Alle Kosten (${filtered.length})</div>`;
+    if(filtered.length===0){
+      html += `<div class="cost-empty"><div class="cost-empty-icon">📋</div><h4>Keine Kosten gefunden</h4></div>`;
+    } else {
+      html += `<div class="cost-table-wrap"><table class="cost-table"><thead><tr><th>Datum</th><th>Bezeichnung</th><th>Bezahlt von</th><th>Status</th><th class="amount">Betrag</th><th></th></tr></thead><tbody>`;
+      [...filtered].reverse().forEach((ex,idx)=>{
+        const realIdx = data.expenses.indexOf(ex);
+        const si = getStatusInfo(ex.status);
+        html += `<tr class="status-${ex.status}"><td>${ex.date||'-'}</td><td>${esc(ex.desc)}</td><td class="payer">${esc(ex.payer)}</td><td><span class="status-badge ${si.cls}" onclick="toggleCostStatus(${realIdx})" title="Klicken zum Ändern">${si.label}</span></td><td class="amount">${fmt(ex.amount)} ${data.currency}</td><td><div class="table-actions"><button class="toggle-btn" onclick="toggleCostStatus(${realIdx})" title="Status ändern">🔄</button><button class="delete-btn" onclick="deleteCost(${realIdx})">🗑</button></div></td></tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+  }
+
+  if(costTab==='transfers'){
+    html += `<div class="tab-panel active">`;
+    html += `<div class="section-title">💸 Alle Überweisungen (${data.transfers.length})</div>`;
+    if(data.transfers.length===0){
+      html += `<div class="cost-empty"><div class="cost-empty-icon">💸</div><h4>Keine Überweisungen vorhanden</h4></div>`;
+    } else {
+      html += `<div class="cost-table-wrap"><table class="cost-table"><thead><tr><th>Datum</th><th>Zweck</th><th>Von</th><th>An</th><th>Status</th><th class="amount">Betrag</th><th></th></tr></thead><tbody>`;
+      [...data.transfers].reverse().forEach((tr,idx)=>{
+        const realIdx = data.transfers.indexOf(tr);
+        const statusClass = tr.received?'status-received':'status-pending';
+        const statusLabel = tr.received?'Erhalten':'Nicht erhalten';
+        html += `<tr class="${tr.received?'transfer-row':''}"><td>${tr.date||'-'}</td><td>${esc(tr.desc)}</td><td class="payer">${esc(tr.from)}</td><td class="payer">${esc(tr.to)}</td><td><span class="status-badge ${statusClass}" onclick="toggleTransferStatus(${realIdx})" title="Klicken zum Ändern">${statusLabel}</span></td><td class="amount">${fmt(tr.amount)} ${data.currency}</td><td><div class="table-actions"><button class="toggle-btn" onclick="toggleTransferStatus(${realIdx})" title="Status ändern">🔄</button><button class="delete-btn" onclick="deleteTransfer(${realIdx})">🗑</button></div></td></tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+  }
+
+  if(costTab==='add'){
+    html += `<div class="tab-panel active">`;
+    html += `
+      <div class="form-section">
+        <h4>➕ Einzelne Kosten hinzufügen</h4>
+        <div class="form-row form-row-4">
+          <input type="text" id="a-desc" placeholder="Bezeichnung (z.B. Hotel, Essen, Ticket)">
+          <input type="number" id="a-amount" placeholder="Betrag (€)" min="0" step="0.01">
+          <input type="date" id="a-date" value="${todayStr()}">
+          <select id="a-payer">${getUserOptions('')}</select>
+        </div>
+        <div class="form-row form-row-2" style="max-width:500px;">
+          <select id="a-status">
+            <option value="offen">🟡 Offen – Bar vor Ort</option>
+            <option value="offen_überweisung">💳 Offen – Überweisung</option>
+            <option value="bezahlt">🟢 Bezahlt</option>
+            <option value="bezahlt_überweisung">✅ Bezahlt – Überweisung</option>
+          </select>
+          <button onclick="addAdminCost()">💾 Kosten speichern</button>
+        </div>
+      </div>
+    `;
+    html += `
+      <div class="form-section">
+        <h4>➕ Gruppenkosten (gleicher Betrag für alle 9 Teilnehmer)</h4>
+        <div class="form-row form-row-4">
+          <input type="text" id="g-desc" placeholder="Bezeichnung (z.B. Gruppenhotel, Tour)">
+          <input type="number" id="g-amount" placeholder="Betrag pro Person (€)" min="0" step="0.01">
+          <input type="date" id="g-date" value="${todayStr()}">
+          <select id="g-status">
+            <option value="offen">🟡 Offen – Bar vor Ort</option>
+            <option value="offen_überweisung">💳 Offen – Überweisung</option>
+            <option value="bezahlt">🟢 Bezahlt</option>
+            <option value="bezahlt_überweisung">✅ Bezahlt – Überweisung</option>
+          </select>
+        </div>
+        <div class="form-row" style="max-width:400px;">
+          <button onclick="addGroupCost()" class="btn-accent">💾 Für alle 9 Teilnehmer hinzufügen</button>
+        </div>
+      </div>
+    `;
+    html += `
+      <div class="form-section">
+        <h4>💸 Überweisung eintragen</h4>
+        <div class="form-row form-row-5">
+          <input type="text" id="at-desc" placeholder="Zweck der Überweisung">
+          <input type="number" id="at-amount" placeholder="Betrag (€)" min="0" step="0.01">
+          <input type="date" id="at-date" value="${todayStr()}">
+          <select id="at-from">${getUserOptions('')}</select>
+          <select id="at-to">${getUserOptions('')}</select>
+        </div>
+        <div class="form-row form-row-2" style="max-width:400px;">
+          <select id="at-status"><option value="pending">🟡 Nicht erhalten</option><option value="received">🟢 Erhalten</option></select>
+          <button onclick="addAdminTransfer()" class="btn-info">💾 Überweisung speichern</button>
+        </div>
+      </div>
+    `;
+    html += `</div>`;
+  }
+
+
+
+  return html;
+}
+
+/* ---------- RESTAURANTS APP ---------- */
+let restEditIdx = -1;
+function getCountryByCity(city){
+  const korea = ['incheon','seoul','suwon','daejeon','daegu','busan','cheonan'];
+  const japan = ['fukuoka','hiroshima','fukuyama','osaka','kobe','kyoto','uji','nara','tokio','tokyo','urayasu','saitama','narita'];
+  const c = (city||'').toLowerCase().trim();
+  if(korea.includes(c)) return '🇰🇷 Korea';
+  if(japan.includes(c)) return '🇯🇵 Japan';
+  return '🌍 Sonstige';
+}
+const COUNTRY_ORDER = {'🇰🇷 Korea':1,'🇯🇵 Japan':2,'🌍 Sonstige':3};
+
+function renderRestApp(){
+  const app = document.getElementById('rest-app');
+  if(!app) return;
+  const data = getCostData();
+  const session = getSession();
+  const isAdmin = session.role === 'admin';
+  let html = `<div style="padding:24px;">`;
+  const rests = data.restaurants || [];
+
+  if(isAdmin){
+    const editMode = restEditIdx >= 0 && restEditIdx < rests.length;
+    const editRest = editMode ? rests[restEditIdx] : null;
+    html += `
+      <div class="form-section">
+        <h4>${editMode?'✏️ Restaurant bearbeiten':'➕ Restaurant hinzufügen'}</h4>
+        <div class="form-row form-row-4">
+          <input type="text" id="r-name" placeholder="Restaurant-Name" value="${editMode?esc(editRest.name):''}">
+          <input type="text" id="r-addr" placeholder="Adresse" value="${editMode?esc(editRest.address):''}">
+          <input type="text" id="r-city" placeholder="Stadt" value="${editMode?esc(editRest.city):''}">
+          <input type="text" id="r-url" placeholder="Internetseite (URL)" value="${editMode?esc(editRest.url):''}">
+        </div>
+        <div class="form-row form-row-2" style="max-width:400px;">
+          <button onclick="${editMode?'saveEditRestaurant()':'addRestaurant()'}" class="btn-accent">💾 ${editMode?'Änderungen speichern':'Restaurant speichern'}</button>
+          ${editMode?'<button onclick="cancelEditRestaurant()" class="btn-warning">❌ Abbrechen</button>':''}
+        </div>
+      </div>
+    `;
+  }
+
+  html += `<div class="section-title">🍽️ Restaurants (${rests.length})</div>`;
+  if(rests.length===0){
+    html += `<div class="cost-empty"><div class="cost-empty-icon">🍽️</div><h4>Noch keine Restaurants eingetragen</h4></div>`;
+  } else {
+    // Nach Land → Stadt gruppieren
+    const byCountry = {};
+    rests.forEach((r, idx) => {
+      const country = getCountryByCity(r.city);
+      const city = (r.city || 'Sonstige').trim();
+      if(!byCountry[country]) byCountry[country] = {};
+      if(!byCountry[country][city]) byCountry[country][city] = [];
+      byCountry[country][city].push({r, idx});
+    });
+    const sortedCountries = Object.keys(byCountry).sort((a,b)=>(COUNTRY_ORDER[a]||99)-(COUNTRY_ORDER[b]||99));
+    sortedCountries.forEach(country=>{
+      html += `<div style="margin-bottom:24px;">`;
+      html += `<div style="font-size:1.15rem;font-weight:800;margin-bottom:14px;padding:10px 14px;background:linear-gradient(90deg,var(--secondary),#e67e22);color:#fff;border-radius:10px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);">${esc(country)} <span style="font-size:0.8rem;opacity:0.9;font-weight:600;">(${Object.values(byCountry[country]).flat().length})</span></div>`;
+      const sortedCities = Object.keys(byCountry[country]).sort((a,b)=>a.localeCompare(b,'de'));
+      sortedCities.forEach(city=>{
+        html += `<div style="margin-bottom:16px;margin-left:8px;">`;
+        html += `<div style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:8px;padding:6px 10px;background:#f0f9ff;border-left:4px solid var(--primary);border-radius:0 8px 8px 0;display:flex;align-items:center;gap:8px;">🏙️ ${esc(city)} <span style="font-size:0.75rem;color:var(--muted);font-weight:600;">(${byCountry[country][city].length})</span></div>`;
+        byCountry[country][city].forEach(({r, idx})=>{
+          html += `
+            <div class="rest-card" style="margin-left:8px;">
+              <div class="rest-name">${esc(r.name)}</div>
+              <div class="rest-meta">
+                <span>📍 ${esc(r.address)}</span>
+              </div>
+              ${r.url?`<a class="rest-link" href="${esc(r.url)}" target="_blank">🌐 ${esc(r.url)}</a>`:''}
+              ${isAdmin?`<div class="rest-actions"><button class="edit-btn" onclick="editRestaurant(${idx})">✏️ Bearbeiten</button><button class="delete-btn" onclick="deleteRestaurant(${idx})">🗑 Löschen</button></div>`:''}
+            </div>
+          `;
+        });
+        html += `</div>`;
+      });
+      html += `</div>`;
+    });
+  }
+  html += `</div>`;
+  app.innerHTML = html;
+}
+
+/* ---------- OLD buildRestaurantsView compatibility ---------- */
+function buildRestaurantsView(data, isAdmin){
+  let html = `<div class="tab-panel active">`;
+  const rests = data.restaurants || [];
+  if(isAdmin){
+    const editMode = restEditIdx >= 0 && restEditIdx < rests.length;
+    const editRest = editMode ? rests[restEditIdx] : null;
+    html += `
+      <div class="form-section">
+        <h4>${editMode?'✏️ Restaurant bearbeiten':'➕ Restaurant hinzufügen'}</h4>
+        <div class="form-row form-row-4">
+          <input type="text" id="r-name" placeholder="Restaurant-Name" value="${editMode?esc(editRest.name):''}">
+          <input type="text" id="r-addr" placeholder="Adresse" value="${editMode?esc(editRest.address):''}">
+          <input type="text" id="r-city" placeholder="Stadt" value="${editMode?esc(editRest.city):''}">
+          <input type="text" id="r-url" placeholder="Internetseite (URL)" value="${editMode?esc(editRest.url):''}">
+        </div>
+        <div class="form-row form-row-2" style="max-width:400px;">
+          <button onclick="${editMode?'saveEditRestaurant()':'addRestaurant()'}" class="btn-accent">💾 ${editMode?'Änderungen speichern':'Restaurant speichern'}</button>
+          ${editMode?'<button onclick="cancelEditRestaurant()" class="btn-warning">❌ Abbrechen</button>':''}
+        </div>
+      </div>
+    `;
+  }
+  html += `<div class="section-title">🍽️ Restaurants (${rests.length})</div>`;
+  if(rests.length===0){
+    html += `<div class="cost-empty"><div class="cost-empty-icon">🍽️</div><h4>Noch keine Restaurants eingetragen</h4></div>`;
+  } else {
+    // Nach Land → Stadt gruppieren
+    const byCountry = {};
+    rests.forEach((r, idx) => {
+      const country = getCountryByCity(r.city);
+      const city = (r.city || 'Sonstige').trim();
+      if(!byCountry[country]) byCountry[country] = {};
+      if(!byCountry[country][city]) byCountry[country][city] = [];
+      byCountry[country][city].push({r, idx});
+    });
+    const sortedCountries = Object.keys(byCountry).sort((a,b)=>(COUNTRY_ORDER[a]||99)-(COUNTRY_ORDER[b]||99));
+    sortedCountries.forEach(country=>{
+      html += `<div style="margin-bottom:24px;">`;
+      html += `<div style="font-size:1.15rem;font-weight:800;margin-bottom:14px;padding:10px 14px;background:linear-gradient(90deg,var(--secondary),#e67e22);color:#fff;border-radius:10px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);">${esc(country)} <span style="font-size:0.8rem;opacity:0.9;font-weight:600;">(${Object.values(byCountry[country]).flat().length})</span></div>`;
+      const sortedCities = Object.keys(byCountry[country]).sort((a,b)=>a.localeCompare(b,'de'));
+      sortedCities.forEach(city=>{
+        html += `<div style="margin-bottom:16px;margin-left:8px;">`;
+        html += `<div style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:8px;padding:6px 10px;background:#f0f9ff;border-left:4px solid var(--primary);border-radius:0 8px 8px 0;display:flex;align-items:center;gap:8px;">🏙️ ${esc(city)} <span style="font-size:0.75rem;color:var(--muted);font-weight:600;">(${byCountry[country][city].length})</span></div>`;
+        byCountry[country][city].forEach(({r, idx})=>{
+          html += `
+            <div class="rest-card" style="margin-left:8px;">
+              <div class="rest-name">${esc(r.name)}</div>
+              <div class="rest-meta">
+                <span>📍 ${esc(r.address)}</span>
+              </div>
+              ${r.url?`<a class="rest-link" href="${esc(r.url)}" target="_blank">🌐 ${esc(r.url)}</a>`:''}
+              ${isAdmin?`<div class="rest-actions"><button class="edit-btn" onclick="editRestaurant(${idx})">✏️ Bearbeiten</button><button class="delete-btn" onclick="deleteRestaurant(${idx})">🗑 Löschen</button></div>`:''}
+            </div>
+          `;
+        });
+        html += `</div>`;
+      });
+      html += `</div>`;
+    });
+  }
+  html += `</div>`;
+  return html;
+}
+/* ============================================================
+   HILFSFUNKTIONEN
+   ============================================================ */
+function getUserOptions(exclude){
+  return USERS.filter(u=>u.role==='user'&&u.name!==exclude).map(u=>`<option value="${esc(u.name)}">${esc(u.name)}</option>`).join('');
+}
+
+function calcTotals(data){
+  const total = data.expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const n = Math.max(USERS.filter(u=>u.role==='user').length, 1);
+  const per = total / n;
+  const paid = {};
+  USERS.forEach(u=>paid[u.name]=0);
+  data.expenses.forEach(e=>{ if(e.payer) paid[e.payer]=(paid[e.payer]||0)+(parseFloat(e.amount)||0); });
+  return {total, perPerson:per, paid};
+}
+
+function fmt(n){ return (parseFloat(n)||0).toFixed(2).replace('.',','); }
+function esc(s){ return (s||'').replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+function setFilter(f){ costFilter=f; renderCostApp(); }
+function setCostTab(t){ costTab=t; renderCostApp(); }
+function costLogout(){ clearSession(); costFilter='all'; costTab='overview'; restEditIdx=-1; renderCostApp(); }
+
+/* ============================================================
+   AKTIONEN – KOSTEN
+   ============================================================ */
+function addUserCost(){
+  const desc = document.getElementById('u-desc').value.trim();
+  const amount = parseFloat(document.getElementById('u-amount').value);
+  const date = document.getElementById('u-date').value;
+  const statusEl = document.getElementById('u-status');
+  const status = statusEl ? statusEl.value : 'offen';
+  if(!desc || isNaN(amount) || amount<=0){ alert('Bitte Bezeichnung und gültigen Betrag eingeben.'); return; }
+  const data = getCostData();
+  const session = getSession();
+  data.expenses.push({desc, amount, payer:session.name, status, date:date||todayStr()});
+  saveCostData(data);
+  document.getElementById('u-desc').value='';
+  document.getElementById('u-amount').value='';
+  renderCostApp();
+}
+
+function addAdminCost(){
+  const desc = document.getElementById('a-desc').value.trim();
+  const amount = parseFloat(document.getElementById('a-amount').value);
+  const date = document.getElementById('a-date').value;
+  const payer = document.getElementById('a-payer').value;
+  const statusEl = document.getElementById('a-status');
+  const status = statusEl ? statusEl.value : 'offen';
+  if(!desc || isNaN(amount) || amount<=0){ alert('Bitte Bezeichnung und gültigen Betrag eingeben.'); return; }
+  if(!payer){ alert('Bitte einen Bezahler auswählen.'); return; }
+  const data = getCostData();
+  data.expenses.push({desc, amount, payer, status, date:date||todayStr()});
+  saveCostData(data);
+  document.getElementById('a-desc').value='';
+  document.getElementById('a-amount').value='';
+  renderCostApp();
+}
+
+function addGroupCost(){
+  const desc = document.getElementById('g-desc').value.trim();
+  const amount = parseFloat(document.getElementById('g-amount').value);
+  const date = document.getElementById('g-date').value;
+  const statusEl = document.getElementById('g-status');
+  const status = statusEl ? statusEl.value : 'offen';
+  if(!desc || isNaN(amount) || amount<=0){ alert('Bitte Bezeichnung und gültigen Betrag eingeben.'); return; }
+  const data = getCostData();
+  const userList = USERS.filter(u=>u.role==='user').map(u=>u.name);
+  userList.forEach(u=>{
+    data.expenses.push({desc: desc + ' (' + u + ')', amount, payer:u, status, date:date||todayStr()});
+  });
+  saveCostData(data);
+  document.getElementById('g-desc').value='';
+  document.getElementById('g-amount').value='';
+  renderCostApp();
+}
+
+function deleteCost(idx){
+  if(!confirm('Diese Kosten wirklich löschen?')) return;
+  const data = getCostData();
+  data.expenses.splice(idx,1);
+  saveCostData(data);
+  renderCostApp();
+}
+
+function toggleCostStatus(idx){
+  const data = getCostData();
+  if(idx>=0 && idx<data.expenses.length){
+    data.expenses[idx].status = nextStatus(data.expenses[idx].status || 'offen');
+    saveCostData(data);
+    renderCostApp();
+  }
+}
+
+/* ============================================================
+   AKTIONEN – ÜBERWEISUNGEN
+   ============================================================ */
+function addUserTransfer(){
+  const desc = document.getElementById('ut-desc').value.trim();
+  const amount = parseFloat(document.getElementById('ut-amount').value);
+  const date = document.getElementById('ut-date').value;
+  const to = document.getElementById('ut-to').value;
+  const statusEl = document.getElementById('ut-status');
+  const received = statusEl ? (statusEl.value==='received') : false;
+  if(!desc || isNaN(amount) || amount<=0 || !to){ alert('Bitte alle Felder ausfüllen.'); return; }
+  const data = getCostData();
+  const session = getSession();
+  data.transfers.push({desc, amount, from:session.name, to, received, date:date||todayStr()});
+  saveCostData(data);
+  document.getElementById('ut-desc').value='';
+  document.getElementById('ut-amount').value='';
+  renderCostApp();
+}
+
+function addAdminTransfer(){
+  const desc = document.getElementById('at-desc').value.trim();
+  const amount = parseFloat(document.getElementById('at-amount').value);
+  const date = document.getElementById('at-date').value;
+  const from = document.getElementById('at-from').value;
+  const to = document.getElementById('at-to').value;
+  const statusEl = document.getElementById('at-status');
+  const received = statusEl ? (statusEl.value==='received') : false;
+  if(!desc || isNaN(amount) || amount<=0 || !from || !to){ alert('Bitte alle Felder ausfüllen.'); return; }
+  if(from===to){ alert('Absender und Empfänger dürfen nicht identisch sein.'); return; }
+  const data = getCostData();
+  data.transfers.push({desc, amount, from, to, received, date:date||todayStr()});
+  saveCostData(data);
+  document.getElementById('at-desc').value='';
+  document.getElementById('at-amount').value='';
+  renderCostApp();
+}
+
+function deleteTransfer(idx){
+  if(!confirm('Diese Überweisung wirklich löschen?')) return;
+  const data = getCostData();
+  data.transfers.splice(idx,1);
+  saveCostData(data);
+  renderCostApp();
+}
+
+function toggleTransferStatus(idx){
+  const data = getCostData();
+  if(idx>=0 && idx<data.transfers.length){
+    data.transfers[idx].received = !data.transfers[idx].received;
+    saveCostData(data);
+    renderCostApp();
+  }
+}
+
+/* ============================================================
+   AKTIONEN – RESTAURANTS
+   ============================================================ */
+function addRestaurant(){
+  const name = document.getElementById('r-name').value.trim();
+  const address = document.getElementById('r-addr').value.trim();
+  const city = document.getElementById('r-city').value.trim();
+  const url = document.getElementById('r-url').value.trim();
+  if(!name){ alert('Bitte einen Restaurant-Namen eingeben.'); return; }
+  const data = getCostData();
+  data.restaurants.push({name, address, city, url});
+  saveCostData(data);
+  restEditIdx = -1;
+  renderCostApp();
+}
+
+function editRestaurant(idx){
+  restEditIdx = idx;
+  renderCostApp();
+  setTimeout(()=>{const el=document.getElementById('r-name');if(el)el.focus();},100);
+}
+
+function saveEditRestaurant(){
+  const name = document.getElementById('r-name').value.trim();
+  const address = document.getElementById('r-addr').value.trim();
+  const city = document.getElementById('r-city').value.trim();
+  const url = document.getElementById('r-url').value.trim();
+  if(!name){ alert('Bitte einen Restaurant-Namen eingeben.'); return; }
+  const data = getCostData();
+  if(restEditIdx>=0 && restEditIdx<data.restaurants.length){
+    data.restaurants[restEditIdx] = {name, address, city, url};
+    saveCostData(data);
+  }
+  restEditIdx = -1;
+  renderCostApp();
+}
+
+function cancelEditRestaurant(){
+  restEditIdx = -1;
+  renderCostApp();
+}
+
+function deleteRestaurant(idx){
+  if(!confirm('Dieses Restaurant wirklich löschen?')) return;
+  const data = getCostData();
+  data.restaurants.splice(idx,1);
+  if(restEditIdx===idx) restEditIdx = -1;
+  if(restEditIdx>idx) restEditIdx--;
+  saveCostData(data);
+  renderCostApp();
+}
+
+/* ============================================================
+   ENTER-KEY SUPPORT
+   ============================================================ */
+window.addEventListener('keydown',function(e){
+  if(e.key!=='Enter') return;
+  const active = document.activeElement;
+  if(!active) return;
+  if(active.id==='u-amount' || active.id==='u-desc'){ addUserCost(); }
+  if(active.id==='ut-amount' || active.id==='ut-desc'){ addUserTransfer(); }
+  if(active.id==='login-pass'){ doLogin(); }
+  if(active.id==='login-pass-user'){ doUserLogin(); }
+  if(active.id==='a-amount' || active.id==='a-desc'){ addAdminCost(); }
+  if(active.id==='g-amount' || active.id==='g-desc'){ addGroupCost(); }
+  if(active.id==='at-amount' || active.id==='at-desc'){ addAdminTransfer(); }
+  if(active.id==='r-url'){ restEditIdx>=0?saveEditRestaurant():addRestaurant(); }
+  if(active.id==='r-name' || active.id==='r-addr' || active.id==='r-city'){
+    // Let user tab through fields naturally, only trigger on r-url
+  }
+});
+
+/* Auto-Sync beim Start */
+setTimeout(autoSyncOnLoad, 1500);
+
+</script>
+</body>
+</html>
